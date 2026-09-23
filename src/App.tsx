@@ -3,6 +3,7 @@ import { Bell, ChevronDown, ClipboardList, Factory, FileText, LayoutDashboard, P
 import "./index.css";
 import { loadDashboardOrders, type DashboardOrder } from "./lib/dashboard";
 import { supabaseConfigured } from "./lib/supabase";
+import CommercialPanel from "./CommercialPanel";
 
 type NavItem={label:string;icon:typeof LayoutDashboard;section:string};
 const navItems:NavItem[]=[
@@ -43,7 +44,7 @@ function App(){
  },[search,orders]);
 
  const msg=(s:string)=>{setToast(s);window.setTimeout(()=>setToast(""),2600);};
- const nav=(s:string)=>{setActive(s);if(s!=="Dashboard")msg(s+": módulo preparado para a próxima etapa.");};
+ const nav=(s:string)=>{setActive(s);};
 
  return <div className="app">
   <aside className="sidebar">
@@ -70,7 +71,7 @@ function App(){
     </article></section>
     <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>setBudget(true)}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
     <p className="demo-note">{supabaseConfigured?"Dashboard conectado à fonte oficial de pedidos.":"Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para ativar os dados oficiais."}</p>
-   </>:<section className="module-placeholder panel"><div className="placeholder-icon"><LayoutDashboard size={22}/></div><span className="eyebrow">MÓDULO</span><h2>{active}</h2><p>A navegação está estruturada. Este módulo será implementado sem duplicar regras ou dados.</p><button className="primary" onClick={()=>setActive("Dashboard")}>Voltar ao Dashboard</button></section>}
+   </>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
   {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>{supabaseConfigured?"Supabase conectado":"Modo demonstração"}</span><small>{dataError?"Há uma falha de leitura que precisa ser corrigida.":"Status de configuração"}</small></div></aside></div>}
   {budget&&<div className="overlay" onMouseDown={()=>setBudget(false)}><form className="modal" onSubmit={e=>{e.preventDefault();setBudget(false);msg("Novo orçamento iniciado. A gravação comercial será conectada na próxima etapa.")}} onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">COMERCIAL</span><h2>Novo orçamento</h2></div><button type="button" className="close" onClick={()=>setBudget(false)}><X/></button></div><label>Cliente<input required placeholder="Nome do cliente"/></label><label>Obra<input required placeholder="Nome ou identificação da obra"/></label><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setBudget(false)}>Cancelar</button><button className="primary">Continuar</button></div></form></div>}
