@@ -4,6 +4,7 @@ import "./index.css";
 import { loadDashboardOrders, type DashboardOrder } from "./lib/dashboard";
 import { supabaseConfigured } from "./lib/supabase";
 import CommercialPanel from "./CommercialPanel";
+import OperationsPanel from "./OperationsPanel";
 
 type NavItem={label:string;icon:typeof LayoutDashboard;section:string};
 const navItems:NavItem[]=[
