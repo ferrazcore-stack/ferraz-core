@@ -56,7 +56,7 @@ function App(){
   <main className="main">
    <header><div><span className="eyebrow">{active==="Dashboard"?"VISÃO GERAL":"MÓDULO"}</span><h1>{active}</h1><p>{active==="Dashboard"?"Acompanhe o que precisa de atenção hoje.":"Estrutura funcional em evolução."}</p></div>
     <div className="header-actions"><label className="search-box"><Search size={16}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar" aria-label="Buscar no FERRAZ"/></label>
-     <button className="icon-btn" onClick={()=>setNotice(true)} aria-label="Abrir notificações"><Bell size={19}/><i/></button><button className="primary" onClick={()=>setBudget(true)}><Plus size={18}/>Novo orçamento</button><button className="user" onClick={()=>msg("Perfil preparado.")}>AF</button>
+     <button className="icon-btn" onClick={()=>setNotice(true)} aria-label="Abrir notificações"><Bell size={19}/><i/></button><button className="primary" onClick={()=>nav("Orçamentos")}><Plus size={18}/>Novo orçamento</button><button className="user" onClick={()=>msg("Perfil preparado.")}>AF</button>
     </div>
    </header>
    {active==="Dashboard"?<>
@@ -69,7 +69,7 @@ function App(){
     </article><article className="panel"><div className="panel-head"><div><span className="eyebrow">ATENÇÃO</span><h2>Próximos prazos</h2></div></div>
      {[["Hoje","Residencial Beira Mar","Liberação para produção"],["Amanhã","Casa Almeida","Conferência final"],["24 SET","Apartamento 302","Medição técnica"]].map(r=><button className="deadline" key={r[0]+r[1]} onClick={()=>msg(r[1])}><b>{r[0]}</b><span>{r[1]}</span><small>{r[2]}</small></button>)}
     </article></section>
-    <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>setBudget(true)}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
+    <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>nav("Orçamentos")}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
     <p className="demo-note">{supabaseConfigured?"Dashboard conectado à fonte oficial de pedidos.":"Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para ativar os dados oficiais."}</p>
    </>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
