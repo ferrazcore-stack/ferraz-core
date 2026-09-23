@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { ClipboardList, Factory, Ruler, Truck, Plus } from "lucide-react";
 import { loadOrders, loadMeasurements, loadProductionTasks, loadDeliveries, createMeasurement, createProductionTask, createDelivery, type OrderRow, type Measurement, type ProductionTask, type Delivery } from "./lib/operations";
 
@@ -21,6 +21,6 @@ export default function OperationsPanel({module,search,onToast}:Props){
  return <section className="module-stack"><div className="module-actions"><div><span className="eyebrow">GESTÃO</span><h2>{module}</h2></div></div><div className="panel"><p className="module-copy">Módulo conectado à estrutura do FERRAZ. As próximas operações usam a mesma fonte oficial e mantêm histórico.</p></div></section>;
 }
 
-function OperationList({title,eyebrow,icon,items,action}:{title:string;eyebrow:string;icon:React.ReactNode;items:{id:string;title:string;meta:string;detail:string}[];action:()=>void}){
+function OperationList({title,eyebrow,icon,items,action}:{title:string;eyebrow:string;icon:ReactNode;items:{id:string;title:string;meta:string;detail:string}[];action:()=>void}){
  return <section className="module-stack"><div className="module-actions"><div><span className="eyebrow">{eyebrow}</span><h2>{title}</h2></div><button className="primary" onClick={action}><Plus size={15}/>Nova atividade</button></div><div className="panel">{items.length?items.map(i=><div className="row" key={i.id}><div><strong>{i.title}</strong><span>{i.detail}</span></div><span className="status">{i.meta}</span></div>):<div className="empty">Nenhuma atividade registrada.</div>}</div></section>;
 }
