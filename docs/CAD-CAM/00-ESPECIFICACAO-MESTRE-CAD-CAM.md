@@ -195,3 +195,12 @@ Foi integrado à aplicação o módulo `src/Editor2DPanel.tsx`, acessível pela 
 **Limites e segurança:** o estado ainda é mantido somente em memória durante a sessão. O editor não grava revisões, não está ligado a projeto/ambiente, não possui desenho livre por clique, edição de furos, cotas completas, camadas, biblioteca de componentes, viewport 3D, modelagem sólida ou ferramentas de colaboração. A criação de peças nesta etapa usa geometria retangular inicial. Não há aprovação de fabricação, exportação CAM ou geração de código de máquina. A movimentação no viewport é uma ferramenta de layout 2D, não uma confirmação de medida em obra. Nenhum resultado desta tela pode ser tratado como liberado para produção.
 
 **Critério para a próxima etapa:** separar o estado de edição em um modelo de documento versionado, implementar edição direta de vértices e criação de contornos, adicionar cotas e ferramentas de desenho, cobrir interações com testes automatizados e então conectar peças a projetos/revisões persistentes. A camada 3D e os módulos CAM/CNC permanecem fases subsequentes, com validação específica por máquina antes de qualquer programa ser liberado.
+
+
+## 25. Persistência local, revisões e desenho livre — incremento em desenvolvimento (04/11/2026)
+
+O editor agora grava automaticamente o rascunho em `localStorage` sob chave versionada (`ferraz-core-editor2d-v1`) e registra snapshots nomeados de revisão, limitados a 30 por navegador. As cinco revisões mais recentes podem ser restauradas pela interface. O nome do projeto é um rótulo local, não um identificador de projeto do backend. O mecanismo não sincroniza dispositivos, usuários ou tenants e não constitui trilha de auditoria oficial.
+
+Foi incluído modo de desenho de contorno externo por cliques no fundo do viewport. A conclusão cria a peça poligonal somente se `validateGeometry` aprovar o contorno; contornos com menos de três vértices ou inválidos são recusados. O painel mostra cotas gerais de largura e altura do retângulo envolvente da peça selecionada. Essas cotas são auxiliares e não substituem cotagem técnica de fabricação, conferência de obra ou aprovação humana.
+
+**Limites mantidos:** não há edição de furos, linhas de cota paramétricas, dimensões por aresta, layers, vínculo a projetos/ambientes reais, sincronização Supabase, controle de acesso ou auditoria multiusuário. Não há editor 3D, CAM ou pós-processadores CNC implementados nesta entrega.
