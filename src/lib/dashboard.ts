@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { readLocalState } from "./localStore";
 
 export type DashboardOrder = {
   id: string;
@@ -10,17 +10,12 @@ export type DashboardOrder = {
 };
 
 export async function loadDashboardOrders(): Promise<DashboardOrder[]> {
-  if (!supabase) return [];
-
-  const { data, error } = await supabase
-    .from("dashboard_order_summary")
-    .select("id,order_number,status,customer_name,project_name,total_amount")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
-    ...row,
-    total_amount: Number(row.total_amount ?? 0),
+  return readLocalState().orders.map(order => ({
+    id: order.id,
+    order_number: order.order_number,
+    status: order.status,
+    customer_name: order.customer_name,
+    project_name: order.project_name,
+    total_amount: Number(order.total_amount ?? 0),
   }));
 }
