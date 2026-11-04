@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, ChevronDown, ClipboardList, Factory, FileText, LayoutDashboard, Plus, Search, Settings, Truck, Users, WalletCards, X, ArrowUpRight } from "lucide-react";
 import "./index.css";
-import { loadDashboardOrders, type DashboardOrder } from "./lib/dashboard";
-import { supabaseConfigured } from "./lib/supabase";
+import type { DashboardOrder } from "./lib/dashboard";
 import CommercialPanel from "./CommercialPanel";
 import OperationsPanel from "./OperationsPanel";
 
@@ -25,19 +24,8 @@ function money(value:number){return value.toLocaleString("pt-BR",{style:"currenc
 function App(){
  const [active,setActive]=useState("Dashboard"),[search,setSearch]=useState(""),[notice,setNotice]=useState(false),[budget,setBudget]=useState(false),[toast,setToast]=useState("");
  const [orders,setOrders]=useState<DashboardOrder[]>(demoOrders);
- const [loading,setLoading]=useState(false);
- const [dataError,setDataError]=useState("");
-
- useEffect(()=>{
-   if(!supabaseConfigured) return;
-   let mounted=true;
-   setLoading(true);
-   loadDashboardOrders()
-     .then(rows=>{if(mounted)setOrders(rows);})
-     .catch(error=>{if(mounted)setDataError(error instanceof Error?error.message:"Não foi possível carregar os pedidos.");})
-     .finally(()=>{if(mounted)setLoading(false);});
-   return ()=>{mounted=false;};
- },[]);
+ const [loading]=useState(false);
+ const [dataError]=useState("");
 
  const filtered=useMemo(()=>{
    const q=search.trim().toLowerCase();
@@ -71,10 +59,10 @@ function App(){
      {[["Hoje","Residencial Beira Mar","Liberação para produção"],["Amanhã","Casa Almeida","Conferência final"],["24 SET","Apartamento 302","Medição técnica"]].map(r=><button className="deadline" key={r[0]+r[1]} onClick={()=>msg(r[1])}><b>{r[0]}</b><span>{r[1]}</span><small>{r[2]}</small></button>)}
     </article></section>
     <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>nav("Orçamentos")}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
-    <p className="demo-note">{supabaseConfigured?"Dashboard conectado à fonte oficial de pedidos.":"Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para ativar os dados oficiais."}</p>
+    <p className="demo-note">"Modo local: dados sintéticos. Nenhum backend externo é consultado nesta etapa."</p>
    </>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
-  {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>{supabaseConfigured?"Supabase conectado":"Modo demonstração"}</span><small>{dataError?"Há uma falha de leitura que precisa ser corrigida.":"Status de configuração"}</small></div></aside></div>}
+  {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>"Modo local — repositório"</span><small>"Integrações externas desativadas nesta etapa"</small></div></aside></div>}
   {budget&&<div className="overlay" onMouseDown={()=>setBudget(false)}><form className="modal" onSubmit={e=>{e.preventDefault();setBudget(false);msg("Novo orçamento iniciado. A gravação comercial será conectada na próxima etapa.")}} onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">COMERCIAL</span><h2>Novo orçamento</h2></div><button type="button" className="close" onClick={()=>setBudget(false)}><X/></button></div><label>Cliente<input required placeholder="Nome do cliente"/></label><label>Obra<input required placeholder="Nome ou identificação da obra"/></label><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setBudget(false)}>Cancelar</button><button className="primary">Continuar</button></div></form></div>}
   {toast&&<div className="toast" role="status">{toast}</div>}
  </div>
