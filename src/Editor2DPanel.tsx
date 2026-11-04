@@ -154,8 +154,8 @@ export default function Editor2DPanel() {
   const pointerPosition = (event: React.PointerEvent<SVGSVGElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
     return {
-      x: ((event.clientX - rect.left) / rect.width) * VIEW_W,
-      y: ((event.clientY - rect.top) / rect.height) * VIEW_H,
+      x: ((event.clientX - rect.left) / rect.width) * (VIEW_W / zoom),
+      y: ((event.clientY - rect.top) / rect.height) * (VIEW_H / zoom),
     };
   };
   const startDrag = (event: React.PointerEvent<SVGPolygonElement>, piece: EditorPiece) => {
