@@ -151,8 +151,9 @@ export default function Editor2DPanel() {
     setPieces(next);
     setSelectedId(next[0]?.id ?? null);
   };
-  const pointerPosition = (event: React.PointerEvent<SVGSVGElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
+  const pointerPosition = (event: React.PointerEvent<SVGElement>) => {
+    const rect = svgRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 0, y: 0 };
     return {
       x: ((event.clientX - rect.left) / rect.width) * (VIEW_W / zoom),
       y: ((event.clientY - rect.top) / rect.height) * (VIEW_H / zoom),
@@ -162,7 +163,7 @@ export default function Editor2DPanel() {
     event.preventDefault();
     event.stopPropagation();
     setSelectedId(piece.id);
-    const point = pointerPosition(event as unknown as React.PointerEvent<SVGSVGElement>);
+    const point = pointerPosition(event);
     dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces };
     svgRef.current?.setPointerCapture(event.pointerId);
   };
@@ -228,8 +229,8 @@ export default function Editor2DPanel() {
             <div className="editor-field-grid">
               <label className="editor-field">Posição X (mm)<input type="number" value={Math.round(selected.x)} onChange={event => updateSelected(piece => ({ ...piece, x: Number(event.target.value) || 0 }))}/></label>
               <label className="editor-field">Posição Y (mm)<input type="number" value={Math.round(selected.y)} onChange={event => updateSelected(piece => ({ ...piece, y: Number(event.target.value) || 0 }))}/></label>
-              <label className="editor-field">Largura (mm)<input type="number" min="1" value={width} onChange={event => { const next = Number(event.target.value); if (next > 0) updateSelected(piece => ({ ...piece, geometry: scaleGeometry(piece.geometry, next, height) })); }}/></label>
-              <label className="editor-field">Altura (mm)<input type="number" min="1" value={height} onChange={event => { const next = Number(event.target.value); if (next > 0) updateSelected(piece => ({ ...piece, geometry: scaleGeometry(piece.geometry, width, next) })); }}/></label>
+              <label className="editor-field">Largura (mm)<input key={selected.id + "-width-" + width} type="number" min="1" defaultValue={width} onBlur={event => { const next = Number(event.target.value); if (next > 0 && next !== width) updateSelected(piece => ({ ...piece, geometry: scaleGeometry(piece.geometry, next, height) })); }}/></label>
+              <label className="editor-field">Altura (mm)<input key={selected.id + "-height-" + height} type="number" min="1" defaultValue={height} onBlur={event => { const next = Number(event.target.value); if (next > 0 && next !== height) updateSelected(piece => ({ ...piece, geometry: scaleGeometry(piece.geometry, width, next) })); }}/></label>
               <label className="editor-field">Espessura (mm)<input type="number" min="1" value={selected.geometry.thicknessMm} onChange={event => updateSelected(piece => ({ ...piece, geometry: { ...piece.geometry, thicknessMm: Math.max(1, Number(event.target.value) || 1) } }))}/></label>
               <label className="editor-field">Rotação<input value={`${selected.rotationDeg}°`} readOnly/></label>
             </div>
