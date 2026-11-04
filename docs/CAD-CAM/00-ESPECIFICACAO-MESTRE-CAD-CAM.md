@@ -157,3 +157,19 @@ O resultado do algoritmo `deterministic-shelf-v1` agora identifica:
 - Estado `estimate-only` e avisos de limitações diretamente no payload, para reduzir o risco de uma estimativa ser interpretada como plano de fabricação.
 
 A entrada também rejeita IDs duplicados de chapas/peças e direções de veio fora do contrato. Isso melhora rastreabilidade e evita ambiguidade de identificação, mas não amplia o domínio geométrico suportado: o algoritmo continua limitado a retângulos alinhados aos eixos. Os testes novos verificam o estado estimativo, a origem do template e a rejeição de identificadores duplicados.
+
+
+## 23. Nesting poligonal heurístico inicial (04/11/2026)
+
+Foi acrescentado `src/domain/nesting/polygon-bottom-left.ts`, separado do algoritmo retangular, para iniciar a paginação com contornos poligonais:
+- Contornos externos côncavos e furos poligonais.
+- Defeitos de chapa representados como regiões poligonais proibidas.
+- Restrições de material e espessura.
+- Margem da chapa e distância mínima entre contornos tratada como kerf conservador.
+- Rotações explicitamente permitidas em passos de 90 graus; quando há direção de veio declarada, a versão inicial bloqueia rotação por segurança.
+- Instâncias de peças e coordenadas finais rastreáveis.
+- Rejeição de contornos auto-intersectantes, furos fora do contorno e furos sobrepostos/aninhados.
+
+O método é uma heurística determinística por alinhamento de vértices e ordenação bottom-left. **Não garante ótimo global** e pode deixar de encontrar encaixes existentes. A taxa de aproveitamento usa área líquida das peças sobre área bruta das chapas utilizadas; não desconta área de defeitos/margens nem representa perda real de corte. Não calcula trajetória, ordem de corte, fixação, segurança de máquina, lead-in/lead-out ou código CNC. Defeitos precisam ser classificados e aprovados por uma pessoa. O resultado permanece `estimate-only` e não libera fabricação.
+
+Critério de validação desta etapa: CI com testes automatizados de concavidade, furos, defeitos, rotação, veio, kerf, incompatibilidade de material/espessura e determinismo. A validação industrial ainda depende de geometrias de referência e chapas reais medidas.
