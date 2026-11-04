@@ -302,8 +302,13 @@ export function nestPolygonParts(
       throw new Error("Parâmetros inválidos ou ID duplicado de chapa: " + (sheet.id || "sem ID"));
     }
     templateIds.add(sheet.id);
+    const defectIds = new Set<string>();
     for (const defect of sheet.defects ?? []) {
-      if (!defect.id || !validRing(defect.outer)) throw new Error("Defeito inválido na chapa " + sheet.id);
+      if (!defect.id || defectIds.has(defect.id) || !validRing(defect.outer) ||
+          defect.outer.some(point => point.x < 0 || point.y < 0 || point.x > sheet.widthMm || point.y > sheet.heightMm)) {
+        throw new Error("Defeito inválido, fora da chapa ou com ID duplicado: " + sheet.id);
+      }
+      defectIds.add(defect.id);
     }
     sheets.push({ spec: sheet, obstacles: (sheet.defects ?? []).map(defect => ({ outer: defect.outer })) });
   }
@@ -364,8 +369,14 @@ export function nestPolygonParts(
         const normalized = normalizeRings(part, rotation);
         const rings = [normalized.outer, ...normalized.holes];
         const offsets = candidateOffsets(rings, entry.obstacles, entry.spec.marginMm, entry.spec.kerfMm);
-        const candidates = offsets.ys.flatMap(y => offsets.xs.map(x => ({ x, y })))
-          .sort((a, b) => a.y - b.y || a.x - b.x);
+        const candidates: Array<{ x: number; y: number }> = [];
+        for (const y of offsets.ys) {
+          for (const x of offsets.xs) {
+            candidates.push({ x, y });
+            if (candidates.length >= 25000) break;
+          }
+          if (candidates.length >= 25000) break;
+        }
         for (const offset of candidates) {
           const candidate: Obstacle = {
             outer: translate(normalized.outer, offset.x, offset.y),
@@ -418,6 +429,7 @@ export function nestPolygonParts(
     utilizationPercent: grossSheetAreaMm2 ? Number((placedAreaMm2 / grossSheetAreaMm2 * 100).toFixed(2)) : 0,
     warnings: [
       "Heurística determinística por alinhamento de vértices; não garante ótimo global.",
+      "Cada orientação avalia no máximo 25.000 posições candidatas; geometrias muito complexas podem exigir busca adicional.",
       "Rotação limitada a 0/90/180/270 graus; com veio declarado, somente orientação 0 é considerada.",
       "Kerf é tratado como distância mínima entre contornos, não como trajetória real de ferramenta.",
       "Defeitos são áreas poligonais proibidas; classificação e medição dos defeitos exigem validação humana.",
