@@ -4,7 +4,7 @@
 
 ## 1. Produto e tenancy
 
-FERRAZ é a plataforma SaaS central. Cada empresa cliente é um tenant independente. PORCELANE é o primeiro tenant-piloto de referência, não um banco, aplicação ou produto separado. ÁTRIO é a vertical de marmorarias, ativável como conjunto de módulos. Novos segmentos devem reutilizar o núcleo sem herdar regras exclusivas de marmoraria.
+FERRAZ é a plataforma SaaS central. Cada empresa cliente é um tenant independente. PORCELANE é o tenant-piloto de validação e a fonte de verdade operacional inicial. Seus processos, dados, exceções e necessidades reais devem orientar a especificação funcional; não é apenas um exemplo nem um conjunto de dados fictício. ÁTRIO é a vertical de marmorarias, ativável como conjunto de módulos. Novos segmentos devem reutilizar o núcleo sem herdar regras exclusivas de marmoraria.
 
 Cada tenant recebe slug e domínio/subdomínio próprio (ex.: porcelane.<domínio-ferraz>), resolvido para tenant_id no servidor. O slug nunca é autorização. Toda operação lê tenant_id da sessão/membership validada no backend; não confiar em tenant_id enviado pelo navegador.
 
@@ -84,19 +84,34 @@ Separar pacotes por domínio: identity-tenancy, access-control, customers-projec
 
 Não sincronizar repositórios por cópia manual ou banco duplicado. Usar contratos versionados, PRs rastreáveis e um único backend.
 
-## 10. Critérios de aceite antes de dados reais
+## 10. PORCELANE como especificação viva e conjunto integral de validação
 
-- Teste tenant A/B para cada CRUD e RPC: A não lê, altera, apaga ou infere B.
-- Testes anon/authenticated e matriz de papéis.
-- Testes de concorrência/idempotência e transições inválidas.
-- Imutabilidade de QuoteVersion e snapshot do pedido.
-- Upload/download de arquivos com escopo tenant e revogação.
-- Testes de cálculo com casos conhecidos e unidades explícitas.
-- Build, lint e testes automatizados verdes.
-- Backup/restore demonstrado.
-- Migrações reproduzíveis em ambiente de teste limpo.
-- Sem credenciais reais ou dados da PORCELANE em fixtures públicas.
+A realidade operacional da PORCELANE é a referência funcional prioritária e mais atual. A especificação antiga do FERRAZ deve ser comparada e atualizada a partir dela, não o contrário. A planilha operacional vigente é uma fonte primária de requisitos e evidências: abas, colunas, fórmulas, validações, cadastros, exceções, relações, relatórios e rotinas devem ser inventariados e mapeados para o sistema. A planilha não deve permanecer como banco paralelo depois da migração.
+
+A análise da planilha deve gerar:
+- inventário completo de abas, tabelas, campos, fórmulas, validações, dependências e relatórios;
+- dicionário de dados com tipo, unidade, obrigatoriedade, origem e regra;
+- mapa de processos reais, estados, permissões, exceções e responsáveis;
+- matriz de rastreabilidade: cada campo/regra da planilha ligado a tela, serviço, entidade, teste e relatório no FERRAZ;
+- lista explícita de divergências entre planilha, documentação antiga e implementação atual;
+- identificação de dados faltantes ou ambíguos sem preenchê-los por suposição.
+
+### Testes com a realidade completa da PORCELANE
+
+Os testes de aceitação funcional devem cobrir **todo o universo operacional da PORCELANE**, não apenas dados sintéticos ou um fluxo demonstrativo. Isso inclui todos os cadastros, registros históricos, orçamentos, versões, pedidos, ambientes, peças, desenhos/plantas, medidas, materiais, fornecedores, produção, entregas, instalações, lançamentos financeiros, comissões, documentos, fórmulas, relatórios e exceções que existirem na fonte validada.
+
+Execução obrigatória em ambiente isolado de homologação:
+1. Obter cópia íntegra e autorizada da fonte atual da PORCELANE, preservando original, fórmulas, anexos e proveniência.
+2. Classificar e mapear 100% dos dados e regras; registrar contagens, totais de controle, linhas rejeitadas e campos sem correspondência.
+3. Importar a cópia completa para tenant de homologação PORCELANE, com acesso restrito e trilha de auditoria. Não usar fixtures públicas nem misturar com produção.
+4. Reconciliar contagens, somas, fórmulas, saldos e relações entre origem e destino; nenhuma divergência pode ser silenciosamente descartada.
+5. Executar os fluxos reais de ponta a ponta com os registros e exceções da PORCELANE, incluindo desenho, catálogo, orçamento, pedido, produção, entrega e financeiro.
+6. Testar regressão sobre dados históricos e cenários-limite; comparar resultados do FERRAZ com resultados conhecidos da operação atual.
+7. Validar isolamento multiempresa criando ao menos outro tenant de teste separado; confirmar que usuários e operações de PORCELANE não acessam o outro tenant e vice-versa.
+8. Registrar evidências, falhas, correções e aprovação funcional da PORCELANE antes de qualquer migração produtiva.
+
+Dados reais exigem autorização, controles de acesso, minimização de cópias, criptografia, backups e política de retenção. Não enviar plantas, planilhas, documentos ou dados pessoais a serviços de IA externos por padrão. A automação determinística/local deve ser exercitada primeiro; qualquer uso de IA exige autorização específica e avaliação de custo e privacidade.
 
 ## 11. Regra de execução
 
-Trabalhar em branches e PRs. Nunca aplicar migração em banco real, importar planilha/dados da PORCELANE ou publicar deploy sem janela e autorização apropriadas. Testes usam tenants e registros sintéticos. Toda regra não confirmada fica marcada como pendente, não vira default silencioso.
+Trabalhar em branches e PRs. Não alterar a operação ativa nem publicar deploy sem janela e autorização. A homologação deve usar uma cópia integral e protegida dos dados da PORCELANE, não dados inventados; preservar o original imutável. A importação para produção é etapa separada, após reconciliação e aceite. Toda regra não confirmada fica marcada como pendente, não vira default silencioso.
