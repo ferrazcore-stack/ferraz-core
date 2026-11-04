@@ -60,7 +60,7 @@ function App(){
     </article></section>
     <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>nav("Orçamentos")}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
     <p className="demo-note">"Modo local: os cadastros são persistidos neste navegador. Não há conexão com backend externo."</p>
-   </>: ["Medição técnica","Produção","Expedição"].includes(active)?<OperationsPanel module={active} search={search} onToast={msg}/>:<CommercialPanel module={active} search={search} onToast={msg}/>}
+   </>: ["Pedidos","Medição técnica","Produção","Expedição"].includes(active)?<OperationsPanel module={active} search={search} onToast={msg}/>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
   {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>Modo local — repositório</span><small>Integrações externas desativadas nesta etapa</small></div></aside></div>}
 
