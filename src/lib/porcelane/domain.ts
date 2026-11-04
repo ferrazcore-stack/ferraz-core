@@ -158,6 +158,12 @@ export function canStartProduction(piece: PorcelanePiece, order?: PorcelaneOrder
   const blockers: string[] = [];
   if (piece.status !== "cut") blockers.push("Peça ainda não foi cortada.");
   if (piece.cutPlanId === null) blockers.push("Peça sem vínculo com plano de corte.");
+  if (order) {
+    const orderPiece = order.environments.flatMap(environment => environment.pieces).find(item => item.id === piece.id);
+    if (!orderPiece) blockers.push("Peça não pertence ao pedido informado.");
+    else if (orderPiece.environmentId !== piece.environmentId || orderPiece.revision !== piece.revision)
+      blockers.push("Dados da peça divergem do registro vinculado ao pedido.");
+  }
   if (order && piece.cutPlanId) {
     const plan = order.cutPlans.find(item => item.id === piece.cutPlanId);
     if (!plan || plan.status !== "approved" || !canStartCut(order, plan.id).allowed)
@@ -241,6 +247,12 @@ export function validateOrderConsistency(order: PorcelaneOrder): string[] {
       issues.push(piece.code + ": referencia plano de corte inexistente.");
     for (const slabId of piece.reservedSlabIds) if (!slabIds.has(slabId))
       issues.push(piece.code + ": referencia chapa inexistente: " + slabId);
+    if (piece.cutPlanId) {
+      const linkedPlan = order.cutPlans.find(plan => plan.id === piece.cutPlanId);
+      if (linkedPlan && (!piece.reservedSlabIds.every(id => linkedPlan.slabIds.includes(id))
+        || !linkedPlan.slabIds.every(id => piece.reservedSlabIds.includes(id))))
+        issues.push(piece.code + ": reserva individual de chapas diverge das chapas do plano.");
+    }
   }
   return [...new Set(issues)];
 }
