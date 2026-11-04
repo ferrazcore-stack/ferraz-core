@@ -116,7 +116,7 @@ export default function Editor2DPanel() {
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const [zoom, setZoom] = useState(0.75);
-  const [snapEnabled, setSnapEnabled] = useState(true);
+  const [snapEnabled, setSnapEnabled] = useState(true);\n  const [drawingMode, setDrawingMode] = useState(false);\n  const [draftVertices, setDraftVertices] = useState<Point2D[]>([]);
   const [notice, setNotice] = useState("Geometria em milímetros. Arraste uma peça para reposicioná-la.");
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
@@ -142,7 +142,7 @@ export default function Editor2DPanel() {
     setNotice(`Revisão “${revision.name}” restaurada. O rascunho atual foi mantido no histórico de desfazer.`);
   };
 
-  const selected = pieces.find(piece => piece.id === selectedId) ?? null;
+  const selected = pieces.find(piece => piece.id === selectedId) ?? null;\n  const dimensionCorners = selected && selectedBounds ? worldPoints(selected, { points: [{ x: selectedBounds.minX, y: selectedBounds.minY }, { x: selectedBounds.maxX, y: selectedBounds.minY }, { x: selectedBounds.maxX, y: selectedBounds.maxY }, { x: selectedBounds.minX, y: selectedBounds.maxY }] }) : [];
   const selectedBounds = selected ? bounds(selected.geometry) : null;
   const width = selectedBounds ? Math.round(selectedBounds.maxX - selectedBounds.minX) : 0;
   const height = selectedBounds ? Math.round(selectedBounds.maxY - selectedBounds.minY) : 0;
@@ -201,7 +201,7 @@ export default function Editor2DPanel() {
     setPieces(next);
     setSelectedId(next[0]?.id ?? null);
   };
-  const pointerPosition = (event: React.PointerEvent<SVGElement>) => {
+  const pointerPosition = (event: { clientX: number; clientY: number }) => {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return { x: 0, y: 0 };
     return {
@@ -209,7 +209,7 @@ export default function Editor2DPanel() {
       y: ((event.clientY - rect.top) / rect.height) * (VIEW_H / zoom),
     };
   };
-  const startDrag = (event: React.PointerEvent<SVGPolygonElement>, piece: EditorPiece) => {
+  const addDraftVertex = (event: React.MouseEvent<SVGSVGElement>) => {\n    if (!drawingMode) return;\n    const target = event.target as Element;\n    if (target !== event.currentTarget && target.getAttribute("data-canvas-bg") !== "true") return;\n    const point = pointerPosition(event);\n    const vertex = snapEnabled ? { x: snap(point.x), y: snap(point.y) } : point;\n    setDraftVertices(current => [...current, vertex]);\n    setNotice(`Contorno livre: ${draftVertices.length + 1} vértices. Clique em Concluir quando terminar.`);\n  };\n  const finishPolygon = () => {\n    if (draftVertices.length < 3) { setNotice("O contorno precisa de pelo menos três vértices."); return; }\n    const id = `piece-${Date.now()}`;\n    const geometry: CanonicalPieceGeometry = { schemaVersion: 1, units: "mm", coordinateSystem: "piece-local", toleranceMm: 0.01, thicknessMm: 20, outer: { points: draftVertices }, holes: [] };\n    const validation = validateGeometry(geometry);\n    if (!validation.valid) { setNotice(`Contorno não aceito: ${validation.issues[0]?.message ?? "geometria inválida"}`); return; }\n    commit([...pieces, { id, name: `Peça livre ${pieces.length + 1}`, x: 0, y: 0, rotationDeg: 0, geometry }]);\n    setSelectedId(id);\n    setDraftVertices([]);\n    setDrawingMode(false);\n    setNotice("Peça poligonal criada e validada. Confira todas as medidas.");\n  };\n  const startDrag = (event: React.PointerEvent<SVGPolygonElement>, piece: EditorPiece) => {
     event.preventDefault();
     event.stopPropagation();
     setSelectedId(piece.id);
@@ -272,7 +272,7 @@ export default function Editor2DPanel() {
           <button className="secondary" onClick={redo} disabled={!future.length} title="Refazer"><Redo2 size={15}/></button>
           <button className="secondary" onClick={() => setZoom(value => Math.max(.5, value - .1))} title="Diminuir zoom"><Minus size={15}/></button>
           <button className="secondary" onClick={() => setZoom(value => Math.min(1.5, value + .1))} title="Aumentar zoom"><Plus size={15}/></button>
-          <button className="secondary" onClick={addLPiece}>Peça em L</button><button className="primary" onClick={addPiece}><Plus size={15}/>Peça retangular</button>
+          <button className="secondary" onClick={addLPiece}>Peça em L</button><button className="secondary" onClick={() => { setDrawingMode(true); setDraftVertices([]); setSelectedId(null); setNotice("Clique na área quadriculada para desenhar os vértices do contorno."); }}>Desenhar contorno</button>{drawingMode && <><button className="secondary" onClick={finishPolygon}>Concluir contorno</button><button className="secondary" onClick={() => { setDrawingMode(false); setDraftVertices([]); }}>Cancelar desenho</button></>}<button className="primary" onClick={addPiece}><Plus size={15}/>Peça retangular</button>
         </div>
       </div>
       <div className="editor-notice"><Grid3X3 size={16}/><span>{notice} <strong>Prévia de trabalho — não libera fabricação.</strong></span></div>
@@ -281,7 +281,7 @@ export default function Editor2DPanel() {
       <div className="editor-layout">
         <div className="editor-canvas-wrap">
           <div className="editor-canvas-head"><span>PLANTA · MILÍMETROS</span><span>{Math.round(zoom * 100)}% · grade {GRID} mm</span></div>
-          <svg ref={svgRef} className="editor-canvas" viewBox={`0 0 ${VIEW_W / zoom} ${VIEW_H / zoom}`} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onPointerDown={() => setSelectedId(null)} role="img" aria-label="Área de desenho 2D interativa">
+          <svg ref={svgRef} className="editor-canvas" viewBox={`0 0 ${VIEW_W / zoom} ${VIEW_H / zoom}`} onClick={addDraftVertex} onPointerMove={moveDrag} onPointerUp={endDrag} onPointerCancel={endDrag} onPointerDown={() => { if (!drawingMode) setSelectedId(null); }} role="img" aria-label="Área de desenho 2D interativa">
             <defs>
               <pattern id="ferraz-grid-small" width={GRID} height={GRID} patternUnits="userSpaceOnUse"><path d={`M ${GRID} 0 L 0 0 0 ${GRID}`} fill="none" stroke="#ecece8" strokeWidth="1"/></pattern>
               <pattern id="ferraz-grid-large" width={GRID * 10} height={GRID * 10} patternUnits="userSpaceOnUse"><rect width={GRID * 10} height={GRID * 10} fill="url(#ferraz-grid-small)"/><path d={`M ${GRID * 10} 0 L 0 0 0 ${GRID * 10}`} fill="none" stroke="#d8d8d2" strokeWidth="1.4"/></pattern>
@@ -298,9 +298,9 @@ export default function Editor2DPanel() {
                 {isSelected && <><polygon points={pointsAttribute(outer)} fill="none" stroke="#263e48" strokeWidth="2" strokeDasharray="12 8" pointerEvents="none"/>{outer.map((point, vertexIndex) => <circle key={vertexIndex} cx={point.x} cy={point.y} r="12" fill="#fff" stroke="#263e48" strokeWidth="4" style={{ cursor: "crosshair" }} onPointerDown={event => startVertexDrag(event, piece, vertexIndex)}/>)}</>}
               </g>;
             })}
-            <text x="24" y="38" fontSize="18" fill="#999">ORIGEM 0,0 · mm</text>
+            {drawingMode && draftVertices.length > 0 && <><polyline points={pointsAttribute(draftVertices)} fill="none" stroke="#8a5a2b" strokeWidth="5" strokeDasharray="10 7" pointerEvents="none"/>{draftVertices.map((point,index)=><circle key={index} cx={point.x} cy={point.y} r="10" fill="#fff" stroke="#8a5a2b" strokeWidth="4" pointerEvents="none"/>)}</>}\n            {dimensionCorners.length === 4 && <g pointerEvents="none" className="editor-dimensions"><line x1={dimensionCorners[0].x} y1={dimensionCorners[0].y - 35} x2={dimensionCorners[1].x} y2={dimensionCorners[1].y - 35}/><line x1={dimensionCorners[0].x} y1={dimensionCorners[0].y - 48} x2={dimensionCorners[0].x} y2={dimensionCorners[0].y + 8}/><line x1={dimensionCorners[1].x} y1={dimensionCorners[1].y - 48} x2={dimensionCorners[1].x} y2={dimensionCorners[1].y + 8}/><text x={(dimensionCorners[0].x+dimensionCorners[1].x)/2} y={dimensionCorners[0].y-48} textAnchor="middle">{width} mm</text><line x1={dimensionCorners[1].x+35} y1={dimensionCorners[1].y} x2={dimensionCorners[2].x+35} y2={dimensionCorners[2].y}/><line x1={dimensionCorners[1].x+8} y1={dimensionCorners[1].y} x2={dimensionCorners[1].x+48} y2={dimensionCorners[1].y}/><line x1={dimensionCorners[2].x+8} y1={dimensionCorners[2].y} x2={dimensionCorners[2].x+48} y2={dimensionCorners[2].y}/><text x={dimensionCorners[1].x+48} y={(dimensionCorners[1].y+dimensionCorners[2].y)/2} textAnchor="middle" transform={`rotate(90 ${dimensionCorners[1].x+48} ${(dimensionCorners[1].y+dimensionCorners[2].y)/2})`}>{height} mm</text></g>}\n            <text x="24" y="38" fontSize="18" fill="#999">ORIGEM 0,0 · mm</text>
           </svg>
-          <div className="editor-canvas-foot"><span>Arraste as peças para mover · encaixe {snapEnabled ? "ativado" : "desativado"}</span><button className="text-button" onClick={() => setSnapEnabled(value => !value)}>{snapEnabled ? "Desativar grade" : "Ativar grade"}</button></div>
+          <div className="editor-canvas-foot"><span>{drawingMode ? "Clique no fundo para adicionar vértices · conclua no botão acima" : "Arraste as peças para mover"} · encaixe {snapEnabled ? "ativado" : "desativado"}</span><button className="text-button" onClick={() => setSnapEnabled(value => !value)}>{snapEnabled ? "Desativar grade" : "Ativar grade"}</button></div>
         </div>
         <aside className="panel editor-properties">
           <div className="panel-head"><div><span className="eyebrow">PROPRIEDADES</span><h2>{selected ? selected.name : "Nenhuma seleção"}</h2></div></div>
@@ -326,7 +326,7 @@ export default function Editor2DPanel() {
               {valid?.issues.map((issue, index) => <small key={index}>{issue.message}</small>)}
             </div>
           </>}
-          <p className="editor-disclaimer">O rascunho e as revisões são salvos localmente neste navegador. Ainda não há sincronização com servidor, vínculo a cadastro oficial de projeto/cliente ou trilha de auditoria multiusuário. Exigem conferência dimensional e aprovação técnica antes de qualquer uso industrial.</p>
+          <p className="editor-disclaimer">O rascunho e as revisões são salvos localmente neste navegador. O editor permite desenho livre de contornos externos e mostra cotas gerais do retângulo envolvente; ainda não há sincronização com servidor, vínculo a cadastro oficial de projeto/cliente, cotas de fabricação completas ou trilha de auditoria multiusuário. Exigem conferência dimensional e aprovação técnica antes de qualquer uso industrial.</p>
         </aside>
       </div>
     </section>
