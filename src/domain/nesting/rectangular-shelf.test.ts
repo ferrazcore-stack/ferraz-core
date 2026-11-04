@@ -64,6 +64,26 @@ describe("deterministic rectangular nesting v1", () => {
     expect(nestRectangularParts([sheet], parts)).toEqual(nestRectangularParts([sheet], parts));
   });
 
+  it("returns an explicit estimate-only status, calculation basis and source sheet template", () => {
+    const result = nestRectangularParts([sheet], [
+      { id: "traceable", widthMm: 300, heightMm: 200, materialId: "quartzite-a", thicknessMm: 20 },
+    ]);
+    expect(result.status).toBe("estimate-only");
+    expect(result.utilizationBasis).toBe("gross-sheet-area");
+    expect(result.sheetsUsed[0].templateId).toBe("sheet-01");
+    expect(result.sheetsUsed[0].marginMm).toBe(sheet.marginMm);
+    expect(result.sheetsUsed[0].kerfMm).toBe(sheet.kerfMm);
+    expect(result.warnings.length).toBeGreaterThan(0);
+  });
+
+  it("rejects duplicate sheet template IDs and duplicate part IDs", () => {
+    expect(() => nestRectangularParts([sheet, sheet], [])).toThrow(/ID duplicado/);
+    expect(() => nestRectangularParts([sheet], [
+      { id: "duplicate", widthMm: 100, heightMm: 100, materialId: "quartzite-a", thicknessMm: 20 },
+      { id: "duplicate", widthMm: 200, heightMm: 100, materialId: "quartzite-a", thicknessMm: 20 },
+    ])).toThrow(/ID de peça duplicado/);
+  });
+
   it("reports pieces that cannot fit any compatible sheet", () => {
     const result = nestRectangularParts([sheet], [
       { id: "oversize", widthMm: 4000, heightMm: 500, materialId: "quartzite-a", thicknessMm: 20 },
