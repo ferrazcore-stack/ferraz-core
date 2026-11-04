@@ -33,6 +33,7 @@ export default function NestingPanel() {
   const [kerfMm, setKerfMm] = useState("4");
   const [materialId, setMaterialId] = useState("quartzito-demo");
   const [thicknessMm, setThicknessMm] = useState("20");
+  const [sheetQuantity, setSheetQuantity] = useState("1");
   const [partsJson, setPartsJson] = useState(JSON.stringify(sampleParts, null, 2));
   const [defectsJson, setDefectsJson] = useState("[]");
   const [result, setResult] = useState<PolygonNestingResult | null>(null);
@@ -41,8 +42,10 @@ export default function NestingPanel() {
   const calculate = () => {
     try {
       const numeric = [widthMm, heightMm, marginMm, kerfMm, thicknessMm].map(Number);
+      const quantity = Number(sheetQuantity);
       if (numeric.some(value => !Number.isFinite(value)) ||
-          numeric[0] <= 0 || numeric[1] <= 0 || numeric[2] < 0 || numeric[3] < 0 || numeric[4] <= 0) {
+          numeric[0] <= 0 || numeric[1] <= 0 || numeric[2] < 0 || numeric[3] < 0 || numeric[4] <= 0 ||
+          !Number.isInteger(quantity) || quantity < 1 || quantity > 500) {
         throw new Error("Confira dimensões, margem, kerf e espessura.");
       }
       const parts = JSON.parse(partsJson) as PolygonNestingPart[];
@@ -56,6 +59,7 @@ export default function NestingPanel() {
         kerfMm: numeric[3],
         materialId,
         thicknessMm: numeric[4],
+        quantity,
         grainDirection: "none",
         defects,
       };
@@ -98,6 +102,7 @@ export default function NestingPanel() {
             <label>Kerf (mm)<input type="number" min="0" value={kerfMm} onChange={event => setKerfMm(event.target.value)}/></label>
             <label>Material / código<input value={materialId} onChange={event => setMaterialId(event.target.value)}/></label>
             <label>Espessura (mm)<input type="number" min="0.1" step="0.1" value={thicknessMm} onChange={event => setThicknessMm(event.target.value)}/></label>
+            <label>Quantidade de chapas<input type="number" min="1" max="500" step="1" value={sheetQuantity} onChange={event => setSheetQuantity(event.target.value)}/></label>
           </div>
           <label className="nesting-json-label">Peças em JSON <textarea spellCheck={false} rows={14} value={partsJson} onChange={event => setPartsJson(event.target.value)}/></label>
           <p className="nesting-help">Cada peça usa id, outer (vértices x/y em milímetros), materialId, thicknessMm e, opcionalmente, holes, quantity e allowedRotationsDeg [0, 90, 180, 270].</p>
