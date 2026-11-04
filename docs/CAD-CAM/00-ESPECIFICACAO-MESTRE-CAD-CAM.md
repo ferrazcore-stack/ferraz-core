@@ -204,3 +204,18 @@ O editor agora grava automaticamente o rascunho em `localStorage` sob chave vers
 Foi incluído modo de desenho de contorno externo por cliques no fundo do viewport. A conclusão cria a peça poligonal somente se `validateGeometry` aprovar o contorno; contornos com menos de três vértices ou inválidos são recusados. O painel mostra cotas gerais de largura e altura do retângulo envolvente da peça selecionada. Essas cotas são auxiliares e não substituem cotagem técnica de fabricação, conferência de obra ou aprovação humana.
 
 **Limites mantidos:** não há edição de furos, linhas de cota paramétricas, dimensões por aresta, layers, vínculo a projetos/ambientes reais, sincronização Supabase, controle de acesso ou auditoria multiusuário. Não há editor 3D, CAM ou pós-processadores CNC implementados nesta entrega.
+
+
+## 26. Fundação de domínio CAM/CNC — contratos e validação inicial (04/11/2026)
+
+Criado `src/domain/cam/cam.ts` com contratos TypeScript para:
+- Máquina CNC: controlador, eixos, envelope útil, origem, limites de spindle/feed, estado de validação e pós-processador identificado por versão/checksum.
+- Ferramentas: tipo, diâmetro, limites de rotação/avanço/profundidade por passe, compatibilidade por máquina e aprovação.
+- Operações: tipo de operação, referência geométrica, ferramenta, sequência, profundidade, safe Z, avanço, mergulho, rotação e step-down.
+- Trabalho CAM: projeto, revisão imutável da peça, máquina, material, operações, estado e aprovação responsável.
+
+A função `validateCamJob` bloqueia inconsistências de identidade da máquina, eixos, envelope, limites físicos, ferramenta não aprovada/incompatível, parâmetros fora dos limites, sequência inválida e pós-processador sem validação/checksum. Separadamente, distingue aptidão para simulação de parâmetros e liberação de máquina. A liberação exige estado `released` e aprovação humana identificada.
+
+Testes unitários foram adicionados em `src/domain/cam/cam.test.ts` para limites, compatibilidade e gates.
+
+**Limites críticos:** não há trajetória CAM, simulação cinemática, detecção de colisões, compensação de ferramenta, estratégia de corte, geração G-code, pós-processador executável, validação de controlador nem comunicação com máquina. O estado/checksum de pós-processador é apenas um contrato de dados nesta etapa; não deve ser preenchido como validado sem implementação e ensaio físico controlado. Esta entrega não autoriza produção.
