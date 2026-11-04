@@ -1,6 +1,6 @@
 # FERRAZ — Especificação Mestre CAD/CAM para Marmoraria
 **Versão:** 1.0  
-**Status:** Requisitos consolidados; primeira biblioteca de geometria canônica e gates de domínio implementados em src/domain/geometry/canonical.ts, com testes adicionados. Editor 2D/3D, cortes, nesting avançado, exportação e integração operacional ainda não implementados/validados. Há um protótipo de nesting retangular por prateleiras, limitado a retângulos.  
+**Status:** Requisitos consolidados; geometria canônica, gates de domínio, nesting poligonal heurístico e primeira etapa de editor 2D interativo implementados na branch de desenvolvimento. Editor 3D, cortes, edição vetorial avançada, persistência operacional, CAM/CNC e integração com máquinas continuam pendentes e não validados.  
 **Produto:** FERRAZ — plataforma integrada de gestão, projetos e fabricação de marmoraria  
 **Módulo:** Editor Técnico CAD/CAM, Modelagem 3D, Paginação e Documentação
 
@@ -174,3 +174,24 @@ Foi acrescentado `src/domain/nesting/polygon-bottom-left.ts`, separado do algori
 O método é uma heurística determinística por alinhamento de vértices e ordenação bottom-left. A função de otimização compara três ordens de entrada (área, maior dimensão e perímetro) e escolhe o melhor resultado por quantidade de peças alocadas, área alocada, número de chapas e aproveitamento. **Não garante ótimo global** e pode deixar de encontrar encaixes existentes. A taxa de aproveitamento usa área líquida das peças sobre área bruta das chapas utilizadas; não desconta área de defeitos/margens nem representa perda real de corte. Não calcula trajetória, ordem de corte, fixação, segurança de máquina, lead-in/lead-out ou código CNC. Defeitos precisam ser classificados e aprovados por uma pessoa. O resultado permanece `estimate-only` e não libera fabricação.
 
 Critério de validação desta etapa: CI com testes automatizados de concavidade, furos, defeitos, rotação, veio, kerf, incompatibilidade de material/espessura e determinismo. A validação industrial ainda depende de geometrias de referência e chapas reais medidas.
+
+
+## 24. Editor 2D interativo — primeira entrega incremental (04/11/2026)
+
+Foi integrado à aplicação o módulo `src/Editor2DPanel.tsx`, acessível pela navegação **Editor 2D**. A interface usa SVG e o contrato `CanonicalPieceGeometry` da biblioteca de domínio, com dimensões em milímetros.
+
+**Implementado nesta etapa:**
+- Seleção e arraste de peças no viewport.
+- Encaixe opcional em grade de 10 mm.
+- Zoom de viewport.
+- Propriedades numéricas de posição X/Y, largura, altura e espessura.
+- Redimensionamento proporcional da geometria e dos furos.
+- Rotação em passos de 90 graus.
+- Duplicação e exclusão de peças.
+- Desfazer/refazer local.
+- Validação da geometria selecionada usando `validateGeometry` e cálculo de área canônica.
+- Layout responsivo inicial para o painel e viewport.
+
+**Limites e segurança:** o estado ainda é mantido somente em memória durante a sessão. O editor não grava revisões, não está ligado a projeto/ambiente, não possui edição de vértices, desenho livre de polígonos, cotas completas, camadas, biblioteca de componentes, viewport 3D, modelagem sólida ou ferramentas de colaboração. A criação de peças nesta etapa usa geometria retangular inicial. Não há aprovação de fabricação, exportação CAM ou geração de código de máquina. A movimentação no viewport é uma ferramenta de layout 2D, não uma confirmação de medida em obra. Nenhum resultado desta tela pode ser tratado como liberado para produção.
+
+**Critério para a próxima etapa:** separar o estado de edição em um modelo de documento versionado, implementar edição direta de vértices e criação de contornos, adicionar cotas e ferramentas de desenho, cobrir interações com testes automatizados e então conectar peças a projetos/revisões persistentes. A camada 3D e os módulos CAM/CNC permanecem fases subsequentes, com validação específica por máquina antes de qualquer programa ser liberado.
