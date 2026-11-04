@@ -75,7 +75,7 @@ export function validateCamJob(
     blockers.push("Máquina CNC não cadastrada.");
     return { validForSimulation: false, validForMachineRelease: false, blockers, warnings };
   }
-  if (!machine.axes.includes("X") || !machine.axes.includes("Y") || !machine.axes.includes("Z")) {
+  if (job.machineId !== machine.id) blockers.push("A máquina vinculada ao trabalho não corresponde à máquina recebida para validação.");\n  if (!machine.axes.includes("X") || !machine.axes.includes("Y") || !machine.axes.includes("Z")) {
     blockers.push("A máquina precisa declarar os eixos X, Y e Z.");
   }
   if (![machine.workEnvelopeMm.x, machine.workEnvelopeMm.y, machine.workEnvelopeMm.z].every(value => Number.isFinite(value) && value > 0)) {
@@ -98,7 +98,7 @@ export function validateCamJob(
       blockers.push(`Operação ${operation.id}: ferramenta não cadastrada.`);
       continue;
     }
-    if (!tool.approved) blockers.push(`Ferramenta ${tool.name} ainda não foi aprovada.`);
+    if (![tool.diameterMm, tool.maxRpm, tool.maxFeedMmMin, tool.maxDepthPerPassMm].every(value => Number.isFinite(value) && value > 0)) blockers.push(`Ferramenta ${tool.name} possui parâmetros físicos inválidos.`);\n    if (!tool.approved) blockers.push(`Ferramenta ${tool.name} ainda não foi aprovada.`);
     if (!tool.compatibleMachineIds.includes(machine.id)) blockers.push(`Ferramenta ${tool.name} não está liberada para a máquina ${machine.name}.`);
     const positive = [operation.depthMm, operation.safeZMm, operation.feedMmMin, operation.plungeMmMin, operation.spindleRpm, operation.stepDownMm];
     if (!positive.every(value => Number.isFinite(value) && value > 0)) blockers.push(`Operação ${operation.id}: profundidades, avanço, rotação e passes devem ser positivos e finitos.`);
