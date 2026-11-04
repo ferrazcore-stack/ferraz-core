@@ -43,6 +43,15 @@ describe("deterministic polygon nesting v1", () => {
     expect(result.placements.find(p => p.partId === "insert")?.sheetId).toBe("slab-01");
   });
 
+  it("allocates pieces across the declared quantity of physical sheets", () => {
+    const twoSlabs = { ...sheet, widthMm: 70, heightMm: 70, marginMm: 5, quantity: 2 };
+    const result = nestPolygonParts([twoSlabs], [rectangle("one", 55, 55), rectangle("two", 55, 55)]);
+    expect(result.placements).toHaveLength(2);
+    expect(result.sheetsUsed).toHaveLength(2);
+    expect(result.sheetsUsed.map(item => item.templateId)).toEqual(["slab-01", "slab-01"]);
+    expect(new Set(result.placements.map(item => item.sheetId)).size).toBe(2);
+  });
+
   it("keeps placements clear of declared slab defects", () => {
     const defectSheet: PolygonNestingSheet = {
       ...sheet,
