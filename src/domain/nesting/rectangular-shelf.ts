@@ -33,10 +33,23 @@ export interface NestingPlacement {
 export interface NestingResult {
   placements: NestingPlacement[];
   unplaced: Array<{ partId: string; instance: number; reason: string }>;
-  sheetsUsed: Array<{ id: string; materialId: string; thicknessMm: number; widthMm: number; heightMm: number }>;
+  sheetsUsed: Array<{
+    id: string;
+    templateId: string;
+    materialId: string;
+    thicknessMm: number;
+    widthMm: number;
+    heightMm: number;
+    marginMm: number;
+    kerfMm: number;
+    grainDirection: "none" | "x" | "y";
+  }>;
   usedAreaMm2: number;
   totalSheetAreaMm2: number;
   utilizationPercent: number;
+  utilizationBasis: "gross-sheet-area";
+  status: "estimate-only";
+  warnings: string[];
   algorithm: "deterministic-shelf-v1";
 }
 
@@ -48,6 +61,7 @@ interface Shelf {
 
 interface WorkingSheet {
   spec: NestingSheetSpec;
+  templateId: string;
   shelves: Shelf[];
   nextYmm: number;
 }
@@ -94,17 +108,28 @@ export function nestRectangularParts(
   const workingSheets: WorkingSheet[] = [];
   const expanded: ExpandedPart[] = [];
 
+  const sheetIds = new Set<string>();
   for (const sheet of sheetTemplates) {
-    if (!sheet.id || !validPositive(sheet.widthMm) || !validPositive(sheet.heightMm) ||
+    if (!sheet.id || sheetIds.has(sheet.id) || !validPositive(sheet.widthMm) || !validPositive(sheet.heightMm) ||
         !Number.isFinite(sheet.marginMm) || sheet.marginMm < 0 ||
         !Number.isFinite(sheet.kerfMm) || sheet.kerfMm < 0 ||
         !validPositive(sheet.thicknessMm) || !sheet.materialId ||
+        !["none", "x", "y"].includes(sheet.grainDirection ?? "none") ||
         sheet.widthMm <= 2 * sheet.marginMm || sheet.heightMm <= 2 * sheet.marginMm) {
-      throw new Error("Parâmetros de chapa inválidos: " + (sheet.id || "sem ID"));
+      throw new Error("Parâmetros de chapa inválidos ou ID duplicado: " + (sheet.id || "sem ID"));
     }
+    sheetIds.add(sheet.id);
   }
 
+  const partIds = new Set<string>();
   for (const part of parts) {
+    if (partIds.has(part.id)) {
+      throw new Error("ID de peça duplicado na entrada: " + part.id);
+    }
+    partIds.add(part.id);
+    if (part.allowRotation !== undefined && typeof part.allowRotation !== "boolean") {
+      throw new Error("A permissão de rotação deve ser booleana: " + part.id);
+    }
     if (!part.id || !validPositive(part.widthMm) || !validPositive(part.heightMm) ||
         !validPositive(part.thicknessMm) || !part.materialId ||
         !Number.isInteger(part.quantity ?? 1) || (part.quantity ?? 1) < 1) {
@@ -248,6 +273,7 @@ export function nestRectangularParts(
       const suffix = workingSheets.filter(sheet => sheet.spec.id.startsWith(template.id + "-auto-")).length + 1;
       const newSheet: WorkingSheet = {
         spec: { ...template, id: template.id + "-auto-" + suffix },
+        templateId: template.id,
         shelves: [],
         nextYmm: template.marginMm,
       };
@@ -277,10 +303,29 @@ export function nestRectangularParts(
   return {
     placements,
     unplaced,
-    sheetsUsed: usedSheetSpecs.map(({ id, materialId, thicknessMm, widthMm, heightMm }) => ({ id, materialId, thicknessMm, widthMm, heightMm })),
+    sheetsUsed: workingSheets.map(({ spec, templateId }) => ({
+      id: spec.id,
+      templateId,
+      materialId: spec.materialId,
+      thicknessMm: spec.thicknessMm,
+      widthMm: spec.widthMm,
+      heightMm: spec.heightMm,
+      marginMm: spec.marginMm,
+      kerfMm: spec.kerfMm,
+      grainDirection: spec.grainDirection ?? "none",
+    })),
     usedAreaMm2,
     totalSheetAreaMm2,
     utilizationPercent: totalSheetAreaMm2 ? Number((usedAreaMm2 / totalSheetAreaMm2 * 100).toFixed(2)) : 0,
+    utilizationBasis: "gross-sheet-area",
+    status: "estimate-only",
+    warnings: [
+      "Estimativa preliminar: não libera fabricação.",
+      "O algoritmo considera apenas peças e chapas retangulares alinhadas aos eixos.",
+      "O kerf é aplicado como folga conservadora; não há simulação de trajetória ou sequência de corte.",
+      "O aproveitamento é calculado sobre a área bruta total das chapas, sem descontar margens ou áreas não utilizáveis.",
+      "Veios são tratados apenas como bloqueio conservador de rotação, sem alinhamento de padrão entre peças.",
+    ],
     algorithm: "deterministic-shelf-v1",
   };
 }
