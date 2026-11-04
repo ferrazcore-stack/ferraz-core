@@ -16,6 +16,8 @@ export interface PolygonNestingSheet {
   kerfMm: number;
   materialId: string;
   thicknessMm: number;
+  /** Number of physical slabs available from this stock template. Defaults to one. */
+  quantity?: number;
   /** When true, only the unrotated part orientation is considered until a grain map is supplied. */
   grainDirection?: "none" | "x" | "y";
   defects?: PolygonDefect[];
@@ -54,6 +56,7 @@ export interface PolygonNestingResult {
   unplaced: Array<{ partId: string; instance: number; reason: string }>;
   sheetsUsed: Array<{
     id: string;
+    templateId: string;
     widthMm: number;
     heightMm: number;
     marginMm: number;
@@ -285,7 +288,7 @@ export function nestPolygonParts(
   const strategy = options.strategy ?? "area-desc";
   const placements: PolygonPlacement[] = [];
   const unplaced: PolygonNestingResult["unplaced"] = [];
-  const sheets: Array<{ spec: PolygonNestingSheet; obstacles: Obstacle[] }> = [];
+  const sheets: Array<{ spec: PolygonNestingSheet; templateId: string; obstacles: Obstacle[] }> = [];
   const templateIds = new Set<string>();
   const partIds = new Set<string>();
 
@@ -296,6 +299,7 @@ export function nestPolygonParts(
         !Number.isFinite(sheet.marginMm) || sheet.marginMm < 0 ||
         !Number.isFinite(sheet.kerfMm) || sheet.kerfMm < 0 ||
         !Number.isFinite(sheet.thicknessMm) || sheet.thicknessMm <= 0 ||
+        !Number.isInteger(sheet.quantity ?? 1) || (sheet.quantity ?? 1) < 1 ||
         !sheet.materialId || sheet.widthMm <= 2 * sheet.marginMm ||
         sheet.heightMm <= 2 * sheet.marginMm ||
         !["none", "x", "y"].includes(sheet.grainDirection ?? "none")) {
@@ -310,7 +314,14 @@ export function nestPolygonParts(
       }
       defectIds.add(defect.id);
     }
-    sheets.push({ spec: sheet, obstacles: (sheet.defects ?? []).map(defect => ({ outer: defect.outer })) });
+    for (let instance = 1; instance <= (sheet.quantity ?? 1); instance += 1) {
+      const instanceId = (sheet.quantity ?? 1) > 1 ? sheet.id + "-" + instance : sheet.id;
+      sheets.push({
+        spec: { ...sheet, id: instanceId },
+        templateId: sheet.id,
+        obstacles: (sheet.defects ?? []).map(defect => ({ outer: defect.outer })),
+      });
+    }
   }
 
   const expanded: ExpandedPart[] = [];
@@ -419,6 +430,7 @@ export function nestPolygonParts(
     unplaced,
     sheetsUsed: usedSheets.map(entry => ({
       id: entry.spec.id,
+      templateId: entry.templateId,
       widthMm: entry.spec.widthMm,
       heightMm: entry.spec.heightMm,
       marginMm: entry.spec.marginMm,
