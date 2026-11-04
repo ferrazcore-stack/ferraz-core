@@ -55,9 +55,10 @@ export interface CamJob {
 }
 
 export interface CamValidationResult {
-  validForSimulation: boolean;
+  validForParameterReview: boolean;
   validForMachineRelease: boolean;
   blockers: string[];
+  releaseBlockers: string[];
   warnings: string[];
 }
 
@@ -67,13 +68,14 @@ export function validateCamJob(
   tools: ToolDefinition[],
 ): CamValidationResult {
   const blockers: string[] = [];
+  const releaseBlockers: string[] = [];
   const warnings: string[] = [];
   if (!job.projectId.trim()) blockers.push("O trabalho CAM precisa estar vinculado a um projeto.");
   if (!job.pieceRevisionId.trim()) blockers.push("O trabalho CAM precisa apontar para uma revisão geométrica imutável.");
   if (!job.materialId.trim()) blockers.push("O material precisa estar identificado.");
   if (!machine) {
     blockers.push("Máquina CNC não cadastrada.");
-    return { validForSimulation: false, validForMachineRelease: false, blockers, warnings };
+    return { validForParameterReview: false, validForMachineRelease: false, blockers, releaseBlockers, warnings };
   }
   if (job.machineId !== machine.id) blockers.push("A máquina vinculada ao trabalho não corresponde à máquina recebida para validação.");
   if (!machine.axes.includes("X") || !machine.axes.includes("Y") || !machine.axes.includes("Z")) {
@@ -115,12 +117,13 @@ export function validateCamJob(
     if (operation.plungeMmMin > operation.feedMmMin) warnings.push(`Operação ${operation.id}: avanço de mergulho maior que o avanço de corte; revisar.`);
   }
   if (machine.postProcessor.state !== "validated" || !machine.postProcessor.checksum) {
-    blockers.push("Pós-processador específico da máquina não está validado e identificado por checksum.");
+    releaseBlockers.push("Pós-processador específico da máquina não está validado e identificado por checksum.");
   }
-  if (machine.validationState !== "validated") blockers.push("Máquina ainda não passou por validação técnica específica.");
-  if (job.state === "released" && (!job.approvedBy || !job.approvedAt)) blockers.push("Liberação exige responsável técnico e data de aprovação.");
-  const validForSimulation = blockers.length === 0;
-  const validForMachineRelease = validForSimulation && job.state === "released" && Boolean(job.approvedBy && job.approvedAt);
-  if (validForSimulation) warnings.push("Validação de parâmetros não substitui simulação de trajetória, verificação de colisões, teste do pós-processador e ensaio seguro na máquina.");
-  return { validForSimulation, validForMachineRelease, blockers, warnings };
+  if (machine.validationState !== "validated") releaseBlockers.push("Máquina ainda não passou por validação técnica específica.");
+  if (job.state !== "released") releaseBlockers.push("Trabalho CAM ainda não está no estado formal de liberação.");
+  if (job.state === "released" && (!job.approvedBy || !job.approvedAt)) releaseBlockers.push("Liberação exige responsável técnico e data de aprovação.");
+  const validForParameterReview = blockers.length === 0;
+  const validForMachineRelease = validForParameterReview && releaseBlockers.length === 0;
+  if (validForParameterReview) warnings.push("A revisão de parâmetros não simula trajetórias, não detecta colisões e não substitui teste do pós-processador ou ensaio seguro na máquina.");
+  return { validForParameterReview, validForMachineRelease, blockers, releaseBlockers, warnings };
 }
