@@ -183,10 +183,35 @@ export function validateGeometry(geometry: CanonicalPieceGeometry): GeometryVali
   validateRing(geometry.outer, "outer", tolerance, issues);
   geometry.holes.forEach((hole, index) => {
     validateRing(hole, "holes[" + index + "]", tolerance, issues);
-    if (hole.points.length && geometry.outer.points.length >= 3 && !pointInRing(hole.points[0], geometry.outer)) {
-      issues.push({ code: "HOLE_OUTSIDE_OUTER", message: "O contorno interno precisa estar dentro do contorno externo.", path: "holes[" + index + "]" });
+    if (hole.points.length && geometry.outer.points.length >= 3) {
+      const anyPointOutside = hole.points.some(point => !pointInRing(point, geometry.outer));
+      const crossesOuter = hole.points.some((point, edgeIndex) => {
+        const nextHolePoint = hole.points[(edgeIndex + 1) % hole.points.length];
+        return geometry.outer.points.some((outerPoint, outerIndex) =>
+          segmentsIntersect(point, nextHolePoint, outerPoint, geometry.outer.points[(outerIndex + 1) % geometry.outer.points.length], tolerance)
+        );
+      });
+      if (anyPointOutside || crossesOuter) {
+        issues.push({ code: "HOLE_OUTSIDE_OUTER", message: "Todo o contorno interno precisa estar dentro do contorno externo e não pode cruzar sua borda.", path: "holes[" + index + "]" });
+      }
     }
   });
+  for (let i = 0; i < geometry.holes.length; i += 1) {
+    for (let j = i + 1; j < geometry.holes.length; j += 1) {
+      const first = geometry.holes[i];
+      const second = geometry.holes[j];
+      const nested = first.points.some(point => pointInRing(point, second)) || second.points.some(point => pointInRing(point, first));
+      const crossing = first.points.some((point, edgeIndex) => {
+        const nextFirst = first.points[(edgeIndex + 1) % first.points.length];
+        return second.points.some((otherPoint, otherIndex) =>
+          segmentsIntersect(point, nextFirst, otherPoint, second.points[(otherIndex + 1) % second.points.length], tolerance)
+        );
+      });
+      if (nested || crossing) {
+        issues.push({ code: "HOLES_OVERLAP", message: "Contornos internos não podem se sobrepor ou cruzar.", path: "holes[" + i + "]" });
+      }
+    }
+  }
   return { valid: issues.length === 0, issues, areaMm2: polygonAreaMm2(geometry) };
 }
 
