@@ -23,7 +23,7 @@ const demoOrders:DashboardOrder[]=[
 function money(value:number){return value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 
 function App(){
- const [active,setActive]=useState("Dashboard"),[search,setSearch]=useState(""),[notice,setNotice]=useState(false),[budget,setBudget]=useState(false),[toast,setToast]=useState("");
+ const [active,setActive]=useState("Dashboard"),[search,setSearch]=useState(""),[notice,setNotice]=useState(false),[toast,setToast]=useState("");
  const [orders,setOrders]=useState<DashboardOrder[]>(demoOrders);
  useEffect(()=>{const local=readLocalState();setOrders(local.orders.length?local.orders:demoOrders);},[]);
 
@@ -50,7 +50,7 @@ function App(){
    </header>
    {active==="Dashboard"?<>
     <section className="cards">
-      {[["Pedidos carregados",loading?"…":String(orders.length),"Persistência local",ClipboardList],["Pedidos ativos",loading?"…":String(orders.filter(o=>o.status!=="Concluído").length),"Dados deste navegador",Factory],["Valor em pedidos",loading?"…":money(orders.reduce((sum,o)=>sum+o.total_amount,0)),"Soma dos pedidos exibidos",WalletCards],["Status","Online","Núcleo FERRAZ",LayoutDashboard]].map(([label,value,meta,Icon])=><article className="metric" key={String(label)}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
+      {[["Pedidos carregados",String(orders.length),"Persistência local",ClipboardList],["Pedidos ativos",String(orders.filter(o=>o.status!=="Concluído").length),"Dados deste navegador",Factory],["Valor em pedidos",money(orders.reduce((sum,o)=>sum+o.total_amount,0)),"Soma dos pedidos exibidos",WalletCards],["Status","Online","Núcleo FERRAZ",LayoutDashboard]].map(([label,value,meta,Icon])=><article className="metric" key={String(label)}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
     </section>
 
     <section className="grid"><article className="panel large"><div className="panel-head"><div><span className="eyebrow">OPERAÇÃO</span><h2>Pedidos em andamento</h2></div><button onClick={()=>nav("Pedidos")}>Ver todos <ArrowUpRight size={13}/></button></div>
