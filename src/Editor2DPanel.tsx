@@ -118,6 +118,7 @@ export default function Editor2DPanel() {
   const [zoom, setZoom] = useState(0.75);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [drawingMode, setDrawingMode] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [draftVertices, setDraftVertices] = useState<Point2D[]>([]);
   const [notice, setNotice] = useState("Geometria em milímetros. Arraste uma peça para reposicioná-la.");
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -128,7 +129,7 @@ export default function Editor2DPanel() {
       const document: StoredEditorDocument = { schemaVersion: 1, projectLabel, updatedAt: new Date().toISOString(), pieces, revisions };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
     } catch { setNotice("Não foi possível salvar neste navegador. Exporte ou registre o trabalho fora do sistema antes de fechar."); }
-  }, [pieces, projectLabel, revisions]);
+  }, [pieces, projectLabel, revisions, isDragging]);
 
   const saveRevision = () => {
     const revision: EditorRevision = { id: `rev-${Date.now()}`, name: revisionName.trim() || `Revisão ${revisions.length + 1}`, createdAt: new Date().toISOString(), pieces: structuredClone(pieces) };
