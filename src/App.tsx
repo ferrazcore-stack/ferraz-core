@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bell, ChevronDown, ClipboardList, Factory, FileText, LayoutDashboard, Plus, Search, Settings, Truck, Users, WalletCards, X, ArrowUpRight } from "lucide-react";
 import "./index.css";
 import type { DashboardOrder } from "./lib/dashboard";
+import { readLocalState } from "./lib/localStore";
 import CommercialPanel from "./CommercialPanel";
 import OperationsPanel from "./OperationsPanel";
 
@@ -24,8 +25,7 @@ function money(value:number){return value.toLocaleString("pt-BR",{style:"currenc
 function App(){
  const [active,setActive]=useState("Dashboard"),[search,setSearch]=useState(""),[notice,setNotice]=useState(false),[budget,setBudget]=useState(false),[toast,setToast]=useState("");
  const [orders,setOrders]=useState<DashboardOrder[]>(demoOrders);
- const [loading]=useState(false);
- const [dataError]=useState("");
+ useEffect(()=>{const local=readLocalState();setOrders(local.orders.length?local.orders:demoOrders);},[]);
 
  const filtered=useMemo(()=>{
    const q=search.trim().toLowerCase();
@@ -50,20 +50,20 @@ function App(){
    </header>
    {active==="Dashboard"?<>
     <section className="cards">
-      {[["Pedidos carregados",loading?"…":String(orders.length),supabaseConfigured?"Fonte Supabase":"Modo demonstração",ClipboardList],["Pedidos ativos",loading?"…":String(orders.filter(o=>o.status!=="Concluído").length),supabaseConfigured?"Dados oficiais":"Dados demonstrativos",Factory],["Valor em pedidos",loading?"…":money(orders.reduce((sum,o)=>sum+o.total_amount,0)),"Soma dos pedidos exibidos",WalletCards],["Status","Online","Núcleo FERRAZ",LayoutDashboard]].map(([label,value,meta,Icon])=><article className="metric" key={String(label)}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
+      {[["Pedidos carregados",loading?"…":String(orders.length),"Persistência local",ClipboardList],["Pedidos ativos",loading?"…":String(orders.filter(o=>o.status!=="Concluído").length),"Dados deste navegador",Factory],["Valor em pedidos",loading?"…":money(orders.reduce((sum,o)=>sum+o.total_amount,0)),"Soma dos pedidos exibidos",WalletCards],["Status","Online","Núcleo FERRAZ",LayoutDashboard]].map(([label,value,meta,Icon])=><article className="metric" key={String(label)}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
     </section>
-    {dataError&&<div className="data-warning" role="alert">Não foi possível carregar os dados do Supabase. A tela está preservando o último conjunto demonstrativo para não ficar vazia.</div>}
+
     <section className="grid"><article className="panel large"><div className="panel-head"><div><span className="eyebrow">OPERAÇÃO</span><h2>Pedidos em andamento</h2></div><button onClick={()=>nav("Pedidos")}>Ver todos <ArrowUpRight size={13}/></button></div>
      <div className="table">{filtered.length?filtered.map(r=><button className="row" key={r.id} onClick={()=>msg(r.order_number+" — pasta digital preparada.")}><div><strong>{r.order_number}</strong><span>{r.customer_name??"Cliente não informado"}</span></div><span>{r.project_name??"Obra não informada"}</span><span className="status">{r.status}</span><strong>{money(r.total_amount)}</strong></button>):<div className="empty">Nenhum pedido encontrado.</div>}</div>
     </article><article className="panel"><div className="panel-head"><div><span className="eyebrow">ATENÇÃO</span><h2>Próximos prazos</h2></div></div>
      {[["Hoje","Residencial Beira Mar","Liberação para produção"],["Amanhã","Casa Almeida","Conferência final"],["24 SET","Apartamento 302","Medição técnica"]].map(r=><button className="deadline" key={r[0]+r[1]} onClick={()=>msg(r[1])}><b>{r[0]}</b><span>{r[1]}</span><small>{r[2]}</small></button>)}
     </article></section>
     <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>nav("Orçamentos")}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
-    <p className="demo-note">"Modo local: dados sintéticos. Nenhum backend externo é consultado nesta etapa."</p>
-   </>:<CommercialPanel module={active} search={search} onToast={msg}/>}
+    <p className="demo-note">"Modo local: os cadastros são persistidos neste navegador. Não há conexão com backend externo."</p>
+   </>: ["Medição técnica","Produção","Expedição"].includes(active)?<OperationsPanel module={active} search={search} onToast={msg}/>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
-  {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>"Modo local — repositório"</span><small>"Integrações externas desativadas nesta etapa"</small></div></aside></div>}
-  {budget&&<div className="overlay" onMouseDown={()=>setBudget(false)}><form className="modal" onSubmit={e=>{e.preventDefault();setBudget(false);msg("Novo orçamento iniciado. A gravação comercial será conectada na próxima etapa.")}} onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">COMERCIAL</span><h2>Novo orçamento</h2></div><button type="button" className="close" onClick={()=>setBudget(false)}><X/></button></div><label>Cliente<input required placeholder="Nome do cliente"/></label><label>Obra<input required placeholder="Nome ou identificação da obra"/></label><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setBudget(false)}>Cancelar</button><button className="primary">Continuar</button></div></form></div>}
+  {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>Modo local — repositório</span><small>Integrações externas desativadas nesta etapa</small></div></aside></div>}
+
   {toast&&<div className="toast" role="status">{toast}</div>}
  </div>
 }
