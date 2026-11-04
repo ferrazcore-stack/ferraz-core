@@ -219,3 +219,10 @@ A função `validateCamJob` bloqueia inconsistências de identidade da máquina,
 Testes unitários foram adicionados em `src/domain/cam/cam.test.ts` para limites, compatibilidade e gates.
 
 **Limites críticos:** não há trajetória CAM, simulação cinemática, detecção de colisões, compensação de ferramenta, estratégia de corte, geração G-code, pós-processador executável, validação de controlador nem comunicação com máquina. O estado/checksum de pós-processador é apenas um contrato de dados nesta etapa; não deve ser preenchido como validado sem implementação e ensaio físico controlado. Esta entrega não autoriza produção.
+
+
+## 27. Prévia 3D isométrica — primeira camada visual (04/11/2026)
+
+Criado `src/Preview3DPanel.tsx` e conectado ao editor 2D. O componente projeta o contorno poligonal canônico como extrusão pela espessura declarada, desenha faces laterais e furos em SVG, e permite orbitar a câmera por arraste e ajustar zoom. Não adiciona dependências de renderização 3D.
+
+**Limites:** trata-se de uma prévia ortográfica extrudada, não de um modelador 3D sólido. Não há edição de geometria no espaço 3D, superfícies curvas, operações booleanas, montagem de componentes, colisões, iluminação/renderização física, cortes técnicos ou exportação de malha. A geometria canônica 2D continua sendo a fonte de verdade.
