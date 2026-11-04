@@ -9,7 +9,7 @@ Núcleo técnico FERRAZ: domínio geométrico, medições, validações e regras
 - Validação inicial de coordenadas, vértices, auto-interseções, área, espessura e posição de furos.
 - Proveniência e estado das medidas, incluindo confirmação humana.
 - Gate de domínio que bloqueia fabricação quando geometria, medidas, material ou aprovação não estão confirmados.
-- Nesting retangular determinístico inicial, com margens, kerf, material/espessura, rotação condicionada ao veio e rastreio das peças alocadas.
+- Nesting retangular determinístico inicial, com margens, kerf, material/espessura, rotação condicionada ao veio e rastreio das peças alocadas. O resultado declara `estimate-only`, informa a base do aproveitamento e mantém a origem do template de chapa.
 - Testes Vitest e workflow de CI com testes e build.
 
 ## Limites atuais
