@@ -76,7 +76,6 @@ describe("CAM safety validation", () => {
     const result = validateCamJob(job, machine, [tool]);
     expect(result.validForMachineRelease).toBe(false);
   });
-});
 
   
   it("never authorizes machine release even when all legacy flags and approval fields are populated", () => {
@@ -86,3 +85,7 @@ describe("CAM safety validation", () => {
     expect(result.validForMachineRelease).toBe(false);
     expect(result.releaseBlockers.some(item => item.includes("geração NC"))).toBe(true);
   });
+});
+
+  
+  
