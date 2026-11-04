@@ -83,6 +83,21 @@ describe("deterministic polygon nesting v1", () => {
     expect(Math.max(horizontalGap, verticalGap)).toBeGreaterThanOrEqual(3);
   });
 
+  it("rejects overlapping internal holes and defects outside the stock boundary", () => {
+    const overlappingHoles: PolygonNestingPart = {
+      ...rectangle("bad-holes", 40, 40),
+      holes: [
+        [{ x: 5, y: 5 }, { x: 20, y: 5 }, { x: 20, y: 20 }, { x: 5, y: 20 }],
+        [{ x: 15, y: 15 }, { x: 30, y: 15 }, { x: 30, y: 30 }, { x: 15, y: 30 }],
+      ],
+    };
+    expect(() => nestPolygonParts([sheet], [overlappingHoles])).toThrow(/Furos sobrepostos/);
+    expect(() => nestPolygonParts([{
+      ...sheet,
+      defects: [{ id: "outside", outer: [{ x: 90, y: 10 }, { x: 110, y: 10 }, { x: 110, y: 30 }, { x: 90, y: 30 }] }],
+    }], [])).toThrow(/fora da chapa/);
+  });
+
   it("reports material and thickness mismatches as unplaced", () => {
     const result = nestPolygonParts([sheet], [{ ...rectangle("wrong", 10, 10), materialId: "granite-b" }]);
     expect(result.unplaced[0].reason).toContain("material e espessura");
