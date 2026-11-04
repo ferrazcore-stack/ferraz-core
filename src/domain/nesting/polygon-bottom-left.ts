@@ -1,3 +1,5 @@
+import { validateGeometry, type CanonicalPieceGeometry } from "../geometry/canonical";
+
 export interface PolygonPoint {
   x: number;
   y: number;
@@ -477,5 +479,29 @@ export function optimizePolygonNesting(
       ...best.warnings,
       "Foram comparadas três ordens determinísticas; a seleção é heurística e não prova ótimo global.",
     ],
+  };
+}
+
+
+/** Adapts the shared canonical piece geometry to the polygon nesting input. */
+export function polygonPartFromCanonicalGeometry(input: {
+  id: string;
+  geometry: CanonicalPieceGeometry;
+  materialId: string;
+  allowedRotationsDeg?: Array<0 | 90 | 180 | 270>;
+}): PolygonNestingPart {
+  const validation = validateGeometry(input.geometry);
+  if (!validation.valid) {
+    throw new Error("Geometria canônica inválida para paginação: " +
+      validation.issues.map(issue => issue.message).join(" "));
+  }
+  if (!input.materialId.trim()) throw new Error("Material precisa estar identificado para paginação.");
+  return {
+    id: input.id,
+    outer: input.geometry.outer.points.map(point => ({ x: point.x, y: point.y })),
+    holes: input.geometry.holes.map(hole => hole.points.map(point => ({ x: point.x, y: point.y }))),
+    materialId: input.materialId,
+    thicknessMm: input.geometry.thicknessMm,
+    allowedRotationsDeg: input.allowedRotationsDeg,
   };
 }
