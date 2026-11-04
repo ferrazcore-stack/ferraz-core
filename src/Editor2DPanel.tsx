@@ -98,7 +98,7 @@ export default function Editor2DPanel() {
   const [selectedId, setSelectedId] = useState<string | null>("piece-1");
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
-  const [zoom, setZoom] = useState(1);
+  const [zoom, setZoom] = useState(0.75);
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [notice, setNotice] = useState("Geometria em milímetros. Arraste uma peça para reposicioná-la.");
   const svgRef = useRef<SVGSVGElement | null>(null);
