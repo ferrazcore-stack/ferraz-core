@@ -6,13 +6,14 @@ import { supabaseConfigured } from "./lib/supabase";
 import CommercialPanel from "./CommercialPanel";
 import OperationsPanel from "./OperationsPanel";
 import NestingPanel from "./NestingPanel";
+import Editor2DPanel from "./Editor2DPanel";
 
 type NavItem={label:string;icon:typeof LayoutDashboard;section:string};
 const navItems:NavItem[]=[
  {label:"Dashboard",icon:LayoutDashboard,section:"Geral"},{label:"Clientes e obras",icon:Users,section:"Geral"},
  {label:"Orçamentos",icon:FileText,section:"Geral"},{label:"Pedidos",icon:ClipboardList,section:"Geral"},
  {label:"Medição técnica",icon:Search,section:"Operação"},{label:"Produção",icon:Factory,section:"Operação"},
- {label:"Expedição",icon:Truck,section:"Operação"},{label:"Paginação",icon:Layers,section:"Operação"},{label:"Financeiro",icon:WalletCards,section:"Gestão"},
+ {label:"Expedição",icon:Truck,section:"Operação"},{label:"Editor 2D",icon:Layers,section:"Operação"},{label:"Paginação",icon:Layers,section:"Operação"},{label:"Financeiro",icon:WalletCards,section:"Gestão"},
  {label:"Configurações",icon:Settings,section:"Gestão"}];
 
 const demoOrders:DashboardOrder[]=[
