@@ -1,6 +1,6 @@
 # FERRAZ — Especificação Mestre CAD/CAM para Marmoraria
 **Versão:** 1.0  
-**Status:** Requisitos consolidados; primeira biblioteca de geometria canônica e gates de domínio implementados em src/domain/geometry/canonical.ts, com testes adicionados. Editor 2D/3D, cortes, nesting, exportação e integração operacional ainda não implementados/validados.  
+**Status:** Requisitos consolidados; primeira biblioteca de geometria canônica e gates de domínio implementados em src/domain/geometry/canonical.ts, com testes adicionados. Editor 2D/3D, cortes, nesting avançado, exportação e integração operacional ainda não implementados/validados. Há um protótipo de nesting retangular por prateleiras, limitado a retângulos.  
 **Produto:** FERRAZ — plataforma integrada de gestão, projetos e fabricação de marmoraria  
 **Módulo:** Editor Técnico CAD/CAM, Modelagem 3D, Paginação e Documentação
 
@@ -133,3 +133,16 @@ Foi adicionada uma primeira biblioteca TypeScript independente da interface, com
 - Testes automatizados para geometria válida/inválida e bloqueios de fabricação.
 
 **Limites conhecidos:** a biblioteca ainda não foi conectada à interface, banco ou pipeline de importação; não representa B-rep/solid modeling; não valida interseção entre todos os furos, espessuras por aresta, curvas, sólidos, tolerâncias de máquina ou nesting. A implementação é um primeiro contrato de domínio, não um motor CAD/CAM pronto para produção.
+
+
+## 21. Nesting retangular inicial (deterministic-shelf-v1)
+
+Foi adicionado um algoritmo determinístico inicial para peças retangulares em chapas retangulares:
+- Ordena peças por maior dimensão e área, com desempate estável por ID/instância.
+- Considera material, espessura, margens, kerf e rotação permitida.
+- Bloqueia rotação quando a chapa declara direção de veio.
+- Gera posições por prateleiras, identifica peças não alocadas e calcula aproveitamento bruto por área.
+- Expande quantidade em instâncias rastreáveis e usa IDs derivados para chapas adicionais.
+- Inclui testes para limites da chapa, rotação, veio, incompatibilidade de material/espessura, quantidade, determinismo e peças grandes demais.
+
+**Limites obrigatórios:** somente retângulos axis-aligned; não considera contornos irregulares, furos, recortes, defeitos, zonas proibidas, rotação angular livre, encaixe de curvas, otimização MaxRects/guillotine, corte CNC, sequência de corte, estabilidade/manuseio ou validação de máquina. Kerf é aplicado como folga conservadora no empacotamento. Percentual de aproveitamento usa área bruta da chapa, não uma simulação real de perda. Resultado é estimativa preliminar e não libera fabricação.
