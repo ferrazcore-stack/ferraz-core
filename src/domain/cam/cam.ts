@@ -123,7 +123,11 @@ export function validateCamJob(
   if (job.state !== "released") releaseBlockers.push("Trabalho CAM ainda não está no estado formal de liberação.");
   if (job.state === "released" && (!job.approvedBy || !job.approvedAt)) releaseBlockers.push("Liberação exige responsável técnico e data de aprovação.");
   const validForParameterReview = blockers.length === 0;
-  const validForMachineRelease = validForParameterReview && releaseBlockers.length === 0;
+  // Parameter validation is not a machine-ready CAM pipeline. Until generated NC,
+  // verified post-processor artifacts, trajectory simulation, collision checks and
+  // authenticated human approval exist, release must remain impossible.
+  releaseBlockers.push("Liberação de máquina bloqueada: geração NC, checksum de artefato, simulação de trajetória, verificação de colisões e aprovação autenticada ainda não estão implementados.");
+  const validForMachineRelease = false;
   if (validForParameterReview) warnings.push("A revisão de parâmetros não simula trajetórias, não detecta colisões e não substitui teste do pós-processador ou ensaio seguro na máquina.");
   return { validForParameterReview, validForMachineRelease, blockers, releaseBlockers, warnings };
 }
