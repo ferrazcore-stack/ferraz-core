@@ -204,7 +204,7 @@ function boundaryDistance(a: Obstacle, b: Obstacle): number {
 
 function validRing(ring: PolygonPoint[]): boolean {
   if (!Array.isArray(ring) || ring.length < 3 ||
-      ring.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y)) ||
+      ring.some(p => !p || typeof p !== "object" || !Number.isFinite(p.x) || !Number.isFinite(p.y)) ||
       Math.abs(signedArea(ring)) <= EPS) return false;
   for (let i = 0; i < ring.length; i += 1) {
     for (let j = i + 1; j < ring.length; j += 1) {
@@ -308,6 +308,9 @@ export function nestPolygonParts(
       throw new Error("Parâmetros inválidos ou ID duplicado de chapa: " + (sheet.id || "sem ID"));
     }
     templateIds.add(sheet.id);
+    if (sheet.defects !== undefined && !Array.isArray(sheet.defects)) {
+      throw new Error("A lista de defeitos precisa ser um array: " + sheet.id);
+    }
     const defectIds = new Set<string>();
     for (const defect of sheet.defects ?? []) {
       if (!defect.id || defectIds.has(defect.id) || !validRing(defect.outer) ||
@@ -334,6 +337,13 @@ export function nestPolygonParts(
       throw new Error("Peça poligonal inválida ou ID duplicado: " + (part.id || "sem ID"));
     }
     partIds.add(part.id);
+    if (part.holes !== undefined && !Array.isArray(part.holes)) {
+      throw new Error("A lista de furos precisa ser um array: " + part.id);
+    }
+    if (part.allowedRotationsDeg !== undefined &&
+        (!Array.isArray(part.allowedRotationsDeg) || part.allowedRotationsDeg.some(rotation => !ROTATIONS.includes(rotation)))) {
+      throw new Error("Lista de rotações inválida: " + part.id);
+    }
     const partHoles = part.holes ?? [];
     for (let holeIndex = 0; holeIndex < partHoles.length; holeIndex += 1) {
       const hole = partHoles[holeIndex];
