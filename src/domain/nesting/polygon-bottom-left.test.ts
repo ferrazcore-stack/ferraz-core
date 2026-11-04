@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nestPolygonParts, type PolygonNestingPart, type PolygonNestingSheet } from "./polygon-bottom-left";
+import { nestPolygonParts, optimizePolygonNesting, type PolygonNestingPart, type PolygonNestingSheet } from "./polygon-bottom-left";
 
 const sheet: PolygonNestingSheet = {
   id: "slab-01", widthMm: 100, heightMm: 80, marginMm: 5, kerfMm: 2,
@@ -95,6 +95,21 @@ describe("deterministic polygon nesting v1", () => {
     };
     expect(() => nestPolygonParts([sheet], [bowTie])).toThrow(/inválida/);
     expect(() => nestPolygonParts([sheet], [rectangle("same", 5, 5), rectangle("same", 6, 6)])).toThrow(/duplicado/);
+  });
+
+  it("compares three deterministic ordering strategies and returns the best feasible result", () => {
+    const parts = [
+      rectangle("wide", 50, 12),
+      rectangle("tall", 12, 50),
+      rectangle("square", 20, 20),
+      rectangle("small", 8, 8),
+    ];
+    const result = optimizePolygonNesting([{ ...sheet, widthMm: 100, heightMm: 100 }], parts);
+    expect(result.algorithm).toBe("deterministic-polygon-multi-start-v1");
+    expect(["area-desc", "max-side-desc", "perimeter-desc"]).toContain(result.strategy);
+    expect(result.placements.length + result.unplaced.length).toBe(4);
+    expect(result.warnings.some(warning => warning.includes("três ordens"))).toBe(true);
+    expect(optimizePolygonNesting([{ ...sheet, widthMm: 100, heightMm: 100 }], parts)).toEqual(result);
   });
 
   it("returns explicit estimate-only status and stable results", () => {
