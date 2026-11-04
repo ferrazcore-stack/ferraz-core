@@ -15,13 +15,13 @@ type EditorPiece = {
   rotationDeg: number;
   geometry: CanonicalPieceGeometry;
 };
-type Snapshot = EditorPiece[];
+type Snapshot = EditorPiece[];\ntype DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number };
 
 const VIEW_W = 1600;
 const VIEW_H = 1000;
 const GRID = 10;
 
-function rectangleGeometry(width: number, height: number, thickness = 20): CanonicalPieceGeometry {
+function lGeometry(): CanonicalPieceGeometry {\n  return { schemaVersion: 1, units: "mm", coordinateSystem: "piece-local", toleranceMm: 0.01, thicknessMm: 20, outer: { points: [{ x: 0, y: 0 }, { x: 1400, y: 0 }, { x: 1400, y: 500 }, { x: 600, y: 500 }, { x: 600, y: 900 }, { x: 0, y: 900 }] }, holes: [] };\n}\n\nfunction rectangleGeometry(width: number, height: number, thickness = 20): CanonicalPieceGeometry {
   return {
     schemaVersion: 1,
     units: "mm",
@@ -97,7 +97,7 @@ export default function Editor2DPanel() {
   const [snapEnabled, setSnapEnabled] = useState(true);
   const [notice, setNotice] = useState("Geometria em milímetros. Arraste uma peça para reposicioná-la.");
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const dragRef = useRef<{ id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot } | null>(null);
+  const dragRef = useRef<DragState | null>(null);
 
   const selected = pieces.find(piece => piece.id === selectedId) ?? null;
   const selectedBounds = selected ? bounds(selected.geometry) : null;
@@ -122,7 +122,7 @@ export default function Editor2DPanel() {
     setSelectedId(id);
     setNotice("Nova peça retangular criada. Ajuste suas dimensões no painel.");
   };
-  const duplicate = () => {
+  const addLPiece = () => {\n    const id = `piece-${Date.now()}`;\n    const next = [...pieces, { id, name: `Bancada em L ${pieces.length + 1}`, x: 180, y: 160, rotationDeg: 0, geometry: lGeometry() }];\n    commit(next);\n    setSelectedId(id);\n    setNotice("Peça em L criada. Ajuste sua posição e dimensões.");\n  };\n  const duplicate = () => {
     if (!selected) return;
     const id = `piece-${Date.now()}`;
     commit([...pieces, { ...selected, id, name: `${selected.name} — cópia`, x: selected.x + 80, y: selected.y + 80, geometry: structuredClone(selected.geometry) }]);
@@ -177,7 +177,7 @@ export default function Editor2DPanel() {
     const y = snapEnabled ? snap(drag.pieceY + dy) : drag.pieceY + dy;
     setPieces(current => current.map(piece => piece.id === drag.id ? { ...piece, x, y } : piece));
   };
-  const endDrag = () => {
+  const startVertexDrag = (event: React.PointerEvent<SVGCircleElement>, piece: EditorPiece, vertexIndex: number) => {\n    event.preventDefault();\n    event.stopPropagation();\n    setSelectedId(piece.id);\n    const point = pointerPosition(event);\n    dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex };\n    svgRef.current?.setPointerCapture(event.pointerId);\n  };\n  const endDrag = () => {
     if (!dragRef.current) return;
     const before = dragRef.current.before;
     setPast(current => [...current.slice(-49), before]);
@@ -194,7 +194,7 @@ export default function Editor2DPanel() {
           <button className="secondary" onClick={redo} disabled={!future.length} title="Refazer"><Redo2 size={15}/></button>
           <button className="secondary" onClick={() => setZoom(value => Math.max(.5, value - .1))} title="Diminuir zoom"><Minus size={15}/></button>
           <button className="secondary" onClick={() => setZoom(value => Math.min(1.5, value + .1))} title="Aumentar zoom"><Plus size={15}/></button>
-          <button className="primary" onClick={addPiece}><Plus size={15}/>Nova peça</button>
+          <button className="secondary" onClick={addLPiece}>Peça em L</button><button className="primary" onClick={addPiece}><Plus size={15}/>Peça retangular</button>
         </div>
       </div>
       <div className="editor-notice"><Grid3X3 size={16}/><span>{notice} <strong>Prévia de trabalho — não libera fabricação.</strong></span></div>
@@ -215,7 +215,7 @@ export default function Editor2DPanel() {
                 <polygon points={pointsAttribute(outer)} fill={isSelected ? "#d6e1e4" : "#ded8cb"} stroke={isSelected ? "#263e48" : "#77736b"} strokeWidth={isSelected ? 5 : 3} onPointerDown={event => startDrag(event, piece)} style={{ cursor: "move" }}/>
                 {piece.geometry.holes.map((hole, index) => <polygon key={index} points={pointsAttribute(worldPoints(piece, hole))} fill="#fbfbf9" stroke="#77736b" strokeWidth="3" pointerEvents="none"/>)}
                 <text x={piece.x + (selectedBounds && isSelected ? width / 2 : (bounds(piece.geometry).maxX - bounds(piece.geometry).minX) / 2)} y={piece.y + (bounds(piece.geometry).maxY - bounds(piece.geometry).minY) / 2} textAnchor="middle" dominantBaseline="middle" fontSize="30" fill="#333" pointerEvents="none">{piece.name}</text>
-                {isSelected && <polygon points={pointsAttribute(outer)} fill="none" stroke="#263e48" strokeWidth="2" strokeDasharray="12 8" pointerEvents="none"/>}
+                {isSelected && <><polygon points={pointsAttribute(outer)} fill="none" stroke="#263e48" strokeWidth="2" strokeDasharray="12 8" pointerEvents="none"/>{outer.map((point, vertexIndex) => <circle key={vertexIndex} cx={point.x} cy={point.y} r="12" fill="#fff" stroke="#263e48" strokeWidth="4" style={{ cursor: "crosshair" }} onPointerDown={event => startVertexDrag(event, piece, vertexIndex)}/>)}</>}
               </g>;
             })}
             <text x="24" y="38" fontSize="18" fill="#999">ORIGEM 0,0 · mm</text>
