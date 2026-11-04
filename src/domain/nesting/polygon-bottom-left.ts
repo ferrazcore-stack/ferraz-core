@@ -44,8 +44,11 @@ export interface PolygonPlacement {
   areaMm2: number;
 }
 
+export type PolygonNestingStrategy = "area-desc" | "max-side-desc" | "perimeter-desc";
+
 export interface PolygonNestingResult {
-  algorithm: "deterministic-polygon-bottom-left-v1";
+  algorithm: "deterministic-polygon-bottom-left-v1" | "deterministic-polygon-multi-start-v1";
+  strategy: PolygonNestingStrategy;
   status: "estimate-only";
   placements: PolygonPlacement[];
   unplaced: Array<{ partId: string; instance: number; reason: string }>;
@@ -81,6 +84,21 @@ function signedArea(ring: PolygonPoint[]): number {
 function areaOf(outer: PolygonPoint[], holes: PolygonPoint[][] = []): number {
   return Math.max(0, Math.abs(signedArea(outer)) -
     holes.reduce((sum, hole) => sum + Math.abs(signedArea(hole)), 0));
+}
+
+function boundingWidth(ring: PolygonPoint[]): number {
+  return Math.max(...ring.map(point => point.x)) - Math.min(...ring.map(point => point.x));
+}
+
+function boundingHeight(ring: PolygonPoint[]): number {
+  return Math.max(...ring.map(point => point.y)) - Math.min(...ring.map(point => point.y));
+}
+
+function ringPerimeter(ring: PolygonPoint[]): number {
+  return ring.reduce((sum, point, index) => {
+    const next = ring[(index + 1) % ring.length];
+    return sum + Math.hypot(next.x - point.x, next.y - point.y);
+  }, 0);
 }
 
 function cross(a: PolygonPoint, b: PolygonPoint, c: PolygonPoint): number {
@@ -256,7 +274,9 @@ function candidateOffsets(
 export function nestPolygonParts(
   sheetTemplates: PolygonNestingSheet[],
   parts: PolygonNestingPart[],
+  options: { strategy?: PolygonNestingStrategy } = {},
 ): PolygonNestingResult {
+  const strategy = options.strategy ?? "area-desc";
   const placements: PolygonPlacement[] = [];
   const unplaced: PolygonNestingResult["unplaced"] = [];
   const sheets: Array<{ spec: PolygonNestingSheet; obstacles: Obstacle[] }> = [];
@@ -308,8 +328,16 @@ export function nestPolygonParts(
     for (let instance = 1; instance <= (part.quantity ?? 1); instance += 1) expanded.push({ ...part, instance });
   }
 
-  expanded.sort((a, b) => areaOf(b.outer, b.holes) - areaOf(a.outer, a.holes) ||
-    a.id.localeCompare(b.id) || a.instance - b.instance);
+  expanded.sort((a, b) => {
+    const areaOrder = areaOf(b.outer, b.holes) - areaOf(a.outer, a.holes);
+    const maxSideOrder = Math.max(boundingWidth(b.outer), boundingHeight(b.outer)) -
+      Math.max(boundingWidth(a.outer), boundingHeight(a.outer));
+    const perimeterOrder = ringPerimeter(b.outer) - ringPerimeter(a.outer);
+    const primary = strategy === "max-side-desc" ? maxSideOrder
+      : strategy === "perimeter-desc" ? perimeterOrder
+      : areaOrder;
+    return primary || areaOrder || a.id.localeCompare(b.id) || a.instance - b.instance;
+  });
 
   for (const part of expanded) {
     const compatible = sheets.filter(entry => entry.spec.materialId === part.materialId &&
@@ -368,6 +396,7 @@ export function nestPolygonParts(
 
   return {
     algorithm: "deterministic-polygon-bottom-left-v1",
+    strategy,
     status: "estimate-only",
     placements,
     unplaced,
@@ -382,6 +411,35 @@ export function nestPolygonParts(
       "Defeitos são áreas poligonais proibidas; classificação e medição dos defeitos exigem validação humana.",
       "Não calcula sequência de corte, estabilidade, fixação, lead-in/lead-out ou código CNC.",
       "Resultado estimativo: não libera fabricação.",
+    ],
+  };
+}
+
+
+/**
+ * Runs three deterministic part-ordering heuristics and keeps the best feasible result.
+ * The score prioritizes placed piece count, then placed area, then fewer sheets and utilization.
+ */
+export function optimizePolygonNesting(
+  sheetTemplates: PolygonNestingSheet[],
+  parts: PolygonNestingPart[],
+): PolygonNestingResult {
+  const strategies: PolygonNestingStrategy[] = ["area-desc", "max-side-desc", "perimeter-desc"];
+  const candidates = strategies.map(strategy => nestPolygonParts(sheetTemplates, parts, { strategy }));
+  candidates.sort((a, b) =>
+    b.placements.length - a.placements.length ||
+    b.placedAreaMm2 - a.placedAreaMm2 ||
+    a.sheetsUsed.length - b.sheetsUsed.length ||
+    b.utilizationPercent - a.utilizationPercent ||
+    strategies.indexOf(a.strategy) - strategies.indexOf(b.strategy)
+  );
+  const best = candidates[0];
+  return {
+    ...best,
+    algorithm: "deterministic-polygon-multi-start-v1",
+    warnings: [
+      ...best.warnings,
+      "Foram comparadas três ordens determinísticas; a seleção é heurística e não prova ótimo global.",
     ],
   };
 }
