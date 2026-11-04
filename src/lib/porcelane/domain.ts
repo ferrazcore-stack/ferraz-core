@@ -77,15 +77,30 @@ export type PorcelaneOrder = Readonly<{
 
 export type GateDecision = Readonly<{ allowed: boolean; blockers: readonly string[] }>;
 
+const unique = (values: readonly string[]) => new Set(values).size === values.length;
+const positive = (value: number) => Number.isFinite(value) && value > 0;
+const nonNegative = (value: number) => Number.isFinite(value) && value >= 0;
+
 export function validatePieceRecord(piece: PorcelanePiece): string[] {
   const issues: string[] = [];
   if (!piece.id.trim() || !piece.code.trim()) issues.push("Peça sem identificador ou código.");
+  if (!piece.environmentId.trim()) issues.push("Peça sem ambiente vinculado.");
   if (!Number.isInteger(piece.revision) || piece.revision < 1) issues.push("Revisão da peça inválida.");
   if (![piece.widthMm, piece.depthMm, piece.thicknessMm, piece.quantity].every(Number.isFinite)
-    || piece.widthMm <= 0 || piece.depthMm <= 0 || piece.thicknessMm <= 0 || piece.quantity <= 0)
-    issues.push("Dimensões e quantidade devem ser positivas.");
+    || !positive(piece.widthMm) || !positive(piece.depthMm) || !positive(piece.thicknessMm)
+    || !Number.isInteger(piece.quantity) || piece.quantity < 1)
+    issues.push("Dimensões devem ser positivas e quantidade deve ser inteiro positivo.");
   if (piece.measurementApproval === "approved" && piece.status === "draft")
-    issues.push("Peça medida aprovada não deve permanecer em rascunho.");
+    issues.push("Peça com medição aprovada não deve permanecer em rascunho.");
+  if (piece.status !== "draft" && piece.measurementApproval !== "approved")
+    issues.push("Peça fora de rascunho exige medição aprovada.");
+  if (piece.status === "released" || ["drawn","nested","cut","finished","inspected","loaded","delivered","installed"].includes(piece.status)) {
+    if (piece.technicalApproval !== "approved") issues.push("Peça liberada/avançada exige aprovação técnica.");
+  }
+  if (["drawn","nested","cut","finished","inspected","loaded","delivered","installed"].includes(piece.status)
+    && piece.drawingApproval !== "approved") issues.push("Peça avançada exige desenho aprovado.");
+  if (!unique(piece.reservedSlabIds) || piece.reservedSlabIds.some(id => !id.trim()))
+    issues.push("Vínculos de chapa da peça estão duplicados ou vazios.");
   return issues;
 }
 
@@ -93,44 +108,62 @@ export function canReleasePiece(piece: PorcelanePiece): GateDecision {
   const blockers: string[] = [];
   if (piece.measurementApproval !== "approved") blockers.push("Medição da peça não aprovada.");
   if (piece.technicalApproval !== "approved") blockers.push("Liberação técnica da peça não aprovada.");
+  if (piece.status === "draft") blockers.push("Peça ainda está em rascunho.");
   return { allowed: blockers.length === 0, blockers };
 }
 
 export function canApproveCutPlan(order: PorcelaneOrder, plan: PorcelaneCutPlan): GateDecision {
   const blockers: string[] = [];
   const pieces = order.environments.flatMap(environment => environment.pieces);
-  const selected = plan.pieceIds.map(id => pieces.find(piece => piece.id === id));
+  if (!plan.id.trim()) blockers.push("Plano sem identificador.");
+  if (!Number.isInteger(plan.revision) || plan.revision < 1) blockers.push("Revisão do plano inválida.");
   if (plan.status === "rejected") blockers.push("Plano de corte rejeitado.");
   if (plan.pieceIds.length === 0) blockers.push("Plano sem peças.");
+  if (!unique(plan.pieceIds)) blockers.push("Plano contém peças duplicadas.");
+  if (!unique(plan.slabIds)) blockers.push("Plano contém chapas duplicadas.");
+  const selected = plan.pieceIds.map(id => pieces.find(piece => piece.id === id));
   if (selected.some(piece => !piece)) blockers.push("Plano referencia peça inexistente.");
   for (const piece of selected) {
     if (!piece) continue;
-    const release = canReleasePiece(piece);
-    blockers.push(...release.blockers.map(reason => piece.code + ": " + reason));
+    if (!canReleasePiece(piece).allowed) blockers.push(piece.code + ": peça não está tecnicamente liberada.");
     if (piece.drawingApproval !== "approved") blockers.push(piece.code + ": desenho não aprovado.");
+    if (piece.revision !== plan.revision) blockers.push(piece.code + ": revisão da peça diverge da revisão do plano.");
+    if (piece.cutPlanId !== null && piece.cutPlanId !== plan.id)
+      blockers.push(piece.code + ": peça já está vinculada a outro plano.");
   }
   if (plan.slabIds.length === 0) blockers.push("Plano sem chapas reservadas.");
   for (const slabId of plan.slabIds) {
     const slab = order.slabs.find(item => item.id === slabId);
     if (!slab) blockers.push("Chapa " + slabId + " não encontrada.");
-    else if (slab.status !== "reserved") blockers.push("Chapa " + slabId + " não está reservada.");
+    else {
+      if (slab.status !== "reserved") blockers.push("Chapa " + slabId + " não está reservada.");
+      if (selected.some(piece => piece && piece.thicknessMm !== slab.thicknessMm))
+        blockers.push("Chapa " + slabId + " possui espessura incompatível com as peças.");
+    }
   }
-  if (!Number.isFinite(plan.kerfMm) || plan.kerfMm < 0) blockers.push("Kerf inválido.");
-  if (!Number.isFinite(plan.edgeMarginMm) || plan.edgeMarginMm < 0) blockers.push("Margem de borda inválida.");
-  return { allowed: blockers.length === 0, blockers };
+  if (!nonNegative(plan.kerfMm)) blockers.push("Kerf inválido.");
+  if (!nonNegative(plan.edgeMarginMm)) blockers.push("Margem de borda inválida.");
+  return { allowed: blockers.length === 0, blockers: [...new Set(blockers)] };
 }
 
 export function canStartCut(order: PorcelaneOrder, planId: string): GateDecision {
   const plan = order.cutPlans.find(item => item.id === planId);
   if (!plan) return { allowed: false, blockers: ["Plano de corte não encontrado."] };
   if (plan.status !== "approved") return { allowed: false, blockers: ["Plano de corte ainda não foi aprovado."] };
+  if (!plan.approvedBy?.trim()) return { allowed: false, blockers: ["Plano aprovado sem responsável registrado."] };
   return canApproveCutPlan(order, plan);
 }
 
-export function canStartProduction(piece: PorcelanePiece): GateDecision {
+export function canStartProduction(piece: PorcelanePiece, order?: PorcelaneOrder): GateDecision {
   const blockers: string[] = [];
   if (piece.status !== "cut") blockers.push("Peça ainda não foi cortada.");
   if (piece.cutPlanId === null) blockers.push("Peça sem vínculo com plano de corte.");
+  if (order && piece.cutPlanId) {
+    const plan = order.cutPlans.find(item => item.id === piece.cutPlanId);
+    if (!plan || plan.status !== "approved" || !canStartCut(order, plan.id).allowed)
+      blockers.push("Plano vinculado não existe, não está aprovado ou perdeu validade.");
+    else if (!plan.pieceIds.includes(piece.id)) blockers.push("Plano não contém esta peça.");
+  }
   return { allowed: blockers.length === 0, blockers };
 }
 
@@ -151,10 +184,14 @@ export function validateOrderConsistency(order: PorcelaneOrder): string[] {
   if (!order.id.trim() || !order.code.trim()) issues.push("Pedido sem identificador ou código.");
   if (!Number.isInteger(order.revision) || order.revision < 1) issues.push("Revisão do pedido inválida.");
   if (order.closed && order.budgetApproval !== "approved") issues.push("Pedido fechado sem orçamento aprovado.");
-  const environmentIds = new Set(order.environments.map(environment => environment.id));
+
+  const environmentIds = new Set<string>();
   const pieceIds = new Set<string>();
   for (const environment of order.environments) {
-    if (!environmentIds.has(environment.id)) issues.push("Ambiente sem identificador.");
+    if (!environment.id.trim() || !environment.name.trim()) issues.push("Ambiente sem identificador ou nome.");
+    if (environmentIds.has(environment.id)) issues.push("Identificador de ambiente duplicado: " + environment.id);
+    environmentIds.add(environment.id);
+    if (!Number.isInteger(environment.revision) || environment.revision < 1) issues.push(environment.name + ": revisão inválida.");
     for (const piece of environment.pieces) {
       if (pieceIds.has(piece.id)) issues.push("Identificador de peça duplicado: " + piece.id);
       pieceIds.add(piece.id);
@@ -162,14 +199,48 @@ export function validateOrderConsistency(order: PorcelaneOrder): string[] {
       issues.push(...validatePieceRecord(piece).map(issue => piece.code + ": " + issue));
     }
   }
-  for (const plan of order.cutPlans) {
-    for (const pieceId of plan.pieceIds) if (!pieceIds.has(pieceId)) issues.push("Plano " + plan.id + " referencia peça inexistente: " + pieceId);
+
+  const slabIds = new Set<string>();
+  for (const slab of order.slabs) {
+    if (!slab.id.trim() || !slab.materialCode.trim()) issues.push("Chapa sem identificador ou material.");
+    if (slabIds.has(slab.id)) issues.push("Identificador de chapa duplicado: " + slab.id);
+    slabIds.add(slab.id);
+    if (!positive(slab.widthMm) || !positive(slab.lengthMm) || !positive(slab.thicknessMm))
+      issues.push("Chapa " + slab.id + " possui dimensões inválidas.");
   }
+
+  const offcutIds = new Set<string>();
   for (const offcut of order.offcuts) {
-    if (!order.slabs.some(slab => slab.id === offcut.sourceSlabId))
-      issues.push("Retalho " + offcut.id + " sem chapa de origem.");
-    if (offcut.widthMm <= 0 || offcut.lengthMm <= 0 || offcut.thicknessMm <= 0)
+    if (!offcut.id.trim()) issues.push("Retalho sem identificador.");
+    if (offcutIds.has(offcut.id)) issues.push("Identificador de retalho duplicado: " + offcut.id);
+    offcutIds.add(offcut.id);
+    const source = order.slabs.find(slab => slab.id === offcut.sourceSlabId);
+    if (!source) issues.push("Retalho " + offcut.id + " sem chapa de origem.");
+    else {
+      if (source.materialCode !== offcut.materialCode || source.thicknessMm !== offcut.thicknessMm)
+        issues.push("Retalho " + offcut.id + " incompatível com material/espessura da chapa de origem.");
+      if (offcut.widthMm > source.widthMm || offcut.lengthMm > source.lengthMm)
+        issues.push("Retalho " + offcut.id + " excede as dimensões da chapa de origem.");
+    }
+    if (!positive(offcut.widthMm) || !positive(offcut.lengthMm) || !positive(offcut.thicknessMm))
       issues.push("Retalho " + offcut.id + " possui dimensões inválidas.");
   }
-  return issues;
+
+  const planIds = new Set<string>();
+  for (const plan of order.cutPlans) {
+    if (!plan.id.trim()) issues.push("Plano sem identificador.");
+    if (planIds.has(plan.id)) issues.push("Identificador de plano duplicado: " + plan.id);
+    planIds.add(plan.id);
+    for (const pieceId of plan.pieceIds) if (!pieceIds.has(pieceId))
+      issues.push("Plano " + plan.id + " referencia peça inexistente: " + pieceId);
+    for (const slabId of plan.slabIds) if (!slabIds.has(slabId))
+      issues.push("Plano " + plan.id + " referencia chapa inexistente: " + slabId);
+  }
+  for (const environment of order.environments) for (const piece of environment.pieces) {
+    if (piece.cutPlanId && !planIds.has(piece.cutPlanId))
+      issues.push(piece.code + ": referencia plano de corte inexistente.");
+    for (const slabId of piece.reservedSlabIds) if (!slabIds.has(slabId))
+      issues.push(piece.code + ": referencia chapa inexistente: " + slabId);
+  }
+  return [...new Set(issues)];
 }
