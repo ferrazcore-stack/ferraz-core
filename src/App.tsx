@@ -46,6 +46,12 @@ function App(){
 
  const msg=(s:string)=>{setToast(s);window.setTimeout(()=>setToast(""),2600);};
  const nav=(s:string)=>{setActive(s);};
+ const metricCards: {label:string;value:string;meta:string;Icon:typeof ClipboardList}[]=[
+  {label:"Pedidos carregados",value:loading?"…":String(orders.length),meta:supabaseConfigured?"Fonte Supabase":"Modo demonstração",Icon:ClipboardList},
+  {label:"Pedidos ativos",value:loading?"…":String(orders.filter(o=>o.status!=="Concluído").length),meta:supabaseConfigured?"Dados oficiais":"Dados demonstrativos",Icon:Factory},
+  {label:"Valor em pedidos",value:loading?"…":money(orders.reduce((sum,o)=>sum+o.total_amount,0)),meta:"Soma dos pedidos exibidos",Icon:WalletCards},
+  {label:"Status",value:"Online",meta:"Núcleo FERRAZ",Icon:LayoutDashboard}
+ ];
 
  return <div className="app">
   <aside className="sidebar">
@@ -62,7 +68,7 @@ function App(){
    </header>
    {active==="Dashboard"?<>
     <section className="cards">
-      {[["Pedidos carregados",loading?"…":String(orders.length),supabaseConfigured?"Fonte Supabase":"Modo demonstração",ClipboardList],["Pedidos ativos",loading?"…":String(orders.filter(o=>o.status!=="Concluído").length),supabaseConfigured?"Dados oficiais":"Dados demonstrativos",Factory],["Valor em pedidos",loading?"…":money(orders.reduce((sum,o)=>sum+o.total_amount,0)),"Soma dos pedidos exibidos",WalletCards],["Status","Online","Núcleo FERRAZ",LayoutDashboard]].map(([label,value,meta,Icon])=><article className="metric" key={String(label)}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
+      {metricCards.map(({label,value,meta,Icon})=><article className="metric" key={label}><div className="metric-top"><span>{label}</span><Icon size={18}/></div><strong>{value}</strong><small>{meta}</small></article>)}
     </section>
     {dataError&&<div className="data-warning" role="alert">Não foi possível carregar os dados do Supabase. A tela está preservando o último conjunto demonstrativo para não ficar vazia.</div>}
     <section className="grid"><article className="panel large"><div className="panel-head"><div><span className="eyebrow">OPERAÇÃO</span><h2>Pedidos em andamento</h2></div><button onClick={()=>nav("Pedidos")}>Ver todos <ArrowUpRight size={13}/></button></div>
