@@ -125,6 +125,7 @@ export default function Editor2DPanel() {
   const dragRef = useRef<DragState | null>(null);
 
   useEffect(() => {
+    if (isDragging) return;
     try {
       const document: StoredEditorDocument = { schemaVersion: 1, projectLabel, updatedAt: new Date().toISOString(), pieces, revisions };
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
@@ -240,6 +241,7 @@ export default function Editor2DPanel() {
     setSelectedId(piece.id);
     const point = pointerPosition(event);
     dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces };
+    setIsDragging(true);
     svgRef.current?.setPointerCapture(event.pointerId);
   };
   const moveDrag = (event: React.PointerEvent<SVGSVGElement>) => {
@@ -278,6 +280,7 @@ export default function Editor2DPanel() {
     const point = pointerPosition(event);
     const box = bounds(piece.geometry);
     dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex, centerX: (box.minX + box.maxX) / 2, centerY: (box.minY + box.maxY) / 2 };
+    setIsDragging(true);
     svgRef.current?.setPointerCapture(event.pointerId);
   };
   const endDrag = () => {
@@ -286,6 +289,7 @@ export default function Editor2DPanel() {
     setPast(current => [...current.slice(-49), before]);
     setFuture([]);
     dragRef.current = null;
+    setIsDragging(false);
   };
 
   return (
