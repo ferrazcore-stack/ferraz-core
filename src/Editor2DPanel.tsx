@@ -15,7 +15,20 @@ type EditorPiece = {
   rotationDeg: number;
   geometry: CanonicalPieceGeometry;
 };
-type Snapshot = EditorPiece[];\ntype EditorRevision = { id: string; name: string; createdAt: string; pieces: Snapshot };\ntype StoredEditorDocument = { schemaVersion: 1; projectLabel: string; updatedAt: string; pieces: Snapshot; revisions: EditorRevision[] };\nconst STORAGE_KEY = "ferraz-core-editor2d-v1";\n\nfunction loadEditorDocument(): StoredEditorDocument | null {\n  try {\n    const raw = window.localStorage.getItem(STORAGE_KEY);\n    if (!raw) return null;\n    const parsed = JSON.parse(raw) as StoredEditorDocument;\n    if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.pieces) || !Array.isArray(parsed.revisions)) return null;\n    return parsed;\n  } catch { return null; }\n}
+type Snapshot = EditorPiece[];
+type EditorRevision = { id: string; name: string; createdAt: string; pieces: Snapshot };
+type StoredEditorDocument = { schemaVersion: 1; projectLabel: string; updatedAt: string; pieces: Snapshot; revisions: EditorRevision[] };
+const STORAGE_KEY = "ferraz-core-editor2d-v1";
+
+function loadEditorDocument(): StoredEditorDocument | null {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredEditorDocument;
+    if (parsed.schemaVersion !== 1 || !Array.isArray(parsed.pieces) || !Array.isArray(parsed.revisions)) return null;
+    return parsed;
+  } catch { return null; }
+}
 type DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number; centerX?: number; centerY?: number };
 
 const VIEW_W = 1600;
@@ -94,7 +107,11 @@ const initialPieces: EditorPiece[] = [
 ];
 
 export default function Editor2DPanel() {
-  const [storedDocument] = useState(() => loadEditorDocument());\n  const [pieces, setPieces] = useState<EditorPiece[]>(() => storedDocument?.pieces ?? initialPieces);\n  const [projectLabel, setProjectLabel] = useState(storedDocument?.projectLabel ?? "Projeto local sem vínculo");\n  const [revisions, setRevisions] = useState<EditorRevision[]>(() => storedDocument?.revisions ?? []);\n  const [revisionName, setRevisionName] = useState("");
+  const [storedDocument] = useState(() => loadEditorDocument());
+  const [pieces, setPieces] = useState<EditorPiece[]>(() => storedDocument?.pieces ?? initialPieces);
+  const [projectLabel, setProjectLabel] = useState(storedDocument?.projectLabel ?? "Projeto local sem vínculo");
+  const [revisions, setRevisions] = useState<EditorRevision[]>(() => storedDocument?.revisions ?? []);
+  const [revisionName, setRevisionName] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>("piece-1");
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
@@ -104,7 +121,28 @@ export default function Editor2DPanel() {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
 
-  useEffect(() => {\n    try {\n      const document: StoredEditorDocument = { schemaVersion: 1, projectLabel, updatedAt: new Date().toISOString(), pieces, revisions };\n      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(document));\n    } catch { setNotice("Não foi possível salvar neste navegador. Exporte ou registre o trabalho fora do sistema antes de fechar."); }\n  }, [pieces, projectLabel, revisions]);\n\n  const saveRevision = () => {\n    const revision: EditorRevision = { id: `rev-${Date.now()}`, name: revisionName.trim() || `Revisão ${revisions.length + 1}`, createdAt: new Date().toISOString(), pieces: structuredClone(pieces) };\n    setRevisions(current => [...current, revision].slice(-30));\n    setRevisionName("");\n    setNotice(`Revisão local “${revision.name}” registrada neste navegador.`);\n  };\n  const restoreRevision = (revision: EditorRevision) => {\n    setPast(current => [...current.slice(-49), pieces]);\n    setFuture([]);\n    setPieces(structuredClone(revision.pieces));\n    setSelectedId(revision.pieces[0]?.id ?? null);\n    setNotice(`Revisão “${revision.name}” restaurada. O rascunho atual foi mantido no histórico de desfazer.`);\n  };\n\n  const selected = pieces.find(piece => piece.id === selectedId) ?? null;
+  useEffect(() => {
+    try {
+      const document: StoredEditorDocument = { schemaVersion: 1, projectLabel, updatedAt: new Date().toISOString(), pieces, revisions };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(document));
+    } catch { setNotice("Não foi possível salvar neste navegador. Exporte ou registre o trabalho fora do sistema antes de fechar."); }
+  }, [pieces, projectLabel, revisions]);
+
+  const saveRevision = () => {
+    const revision: EditorRevision = { id: `rev-${Date.now()}`, name: revisionName.trim() || `Revisão ${revisions.length + 1}`, createdAt: new Date().toISOString(), pieces: structuredClone(pieces) };
+    setRevisions(current => [...current, revision].slice(-30));
+    setRevisionName("");
+    setNotice(`Revisão local “${revision.name}” registrada neste navegador.`);
+  };
+  const restoreRevision = (revision: EditorRevision) => {
+    setPast(current => [...current.slice(-49), pieces]);
+    setFuture([]);
+    setPieces(structuredClone(revision.pieces));
+    setSelectedId(revision.pieces[0]?.id ?? null);
+    setNotice(`Revisão “${revision.name}” restaurada. O rascunho atual foi mantido no histórico de desfazer.`);
+  };
+
+  const selected = pieces.find(piece => piece.id === selectedId) ?? null;
   const selectedBounds = selected ? bounds(selected.geometry) : null;
   const width = selectedBounds ? Math.round(selectedBounds.maxX - selectedBounds.minX) : 0;
   const height = selectedBounds ? Math.round(selectedBounds.maxY - selectedBounds.minY) : 0;
@@ -237,7 +275,9 @@ export default function Editor2DPanel() {
           <button className="secondary" onClick={addLPiece}>Peça em L</button><button className="primary" onClick={addPiece}><Plus size={15}/>Peça retangular</button>
         </div>
       </div>
-      <div className="editor-notice"><Grid3X3 size={16}/><span>{notice} <strong>Prévia de trabalho — não libera fabricação.</strong></span></div>\n      <div className="editor-document-bar"><label>Obra / projeto local<input value={projectLabel} onChange={event => setProjectLabel(event.target.value)} aria-label="Nome do projeto local"/></label><label>Nome da revisão<input value={revisionName} onChange={event => setRevisionName(event.target.value)} placeholder="Ex.: Conferência cliente"/></label><button className="secondary" onClick={saveRevision}>Salvar revisão</button><span>{revisions.length} revisões locais</span></div>\n      {revisions.length > 0 && <div className="editor-revision-list"><strong>Histórico de revisões</strong>{[...revisions].reverse().slice(0,5).map(revision => <button key={revision.id} className="text-button" onClick={() => restoreRevision(revision)}>{revision.name} · {new Date(revision.createdAt).toLocaleString("pt-BR")}</button>)}</div>}
+      <div className="editor-notice"><Grid3X3 size={16}/><span>{notice} <strong>Prévia de trabalho — não libera fabricação.</strong></span></div>
+      <div className="editor-document-bar"><label>Obra / projeto local<input value={projectLabel} onChange={event => setProjectLabel(event.target.value)} aria-label="Nome do projeto local"/></label><label>Nome da revisão<input value={revisionName} onChange={event => setRevisionName(event.target.value)} placeholder="Ex.: Conferência cliente"/></label><button className="secondary" onClick={saveRevision}>Salvar revisão</button><span>{revisions.length} revisões locais</span></div>
+      {revisions.length > 0 && <div className="editor-revision-list"><strong>Histórico de revisões</strong>{[...revisions].reverse().slice(0,5).map(revision => <button key={revision.id} className="text-button" onClick={() => restoreRevision(revision)}>{revision.name} · {new Date(revision.createdAt).toLocaleString("pt-BR")}</button>)}</div>}
       <div className="editor-layout">
         <div className="editor-canvas-wrap">
           <div className="editor-canvas-head"><span>PLANTA · MILÍMETROS</span><span>{Math.round(zoom * 100)}% · grade {GRID} mm</span></div>
