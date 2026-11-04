@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Copy, Grid3X3, Minus, Plus, Redo2, RotateCw, Trash2, Undo2 } from "lucide-react";
+import Preview3DPanel from "./Preview3DPanel";
 import {
   polygonAreaMm2,
   validateGeometry,
@@ -360,6 +361,7 @@ export default function Editor2DPanel() {
           <p className="editor-disclaimer">O rascunho e as revisões são salvos localmente neste navegador. O editor permite desenho livre de contornos externos e mostra cotas gerais do retângulo envolvente; ainda não há sincronização com servidor, vínculo a cadastro oficial de projeto/cliente, cotas de fabricação completas ou trilha de auditoria multiusuário. Exigem conferência dimensional e aprovação técnica antes de qualquer uso industrial.</p>
         </aside>
       </div>
+      <Preview3DPanel name={selected?.name ?? ""} geometry={selected?.geometry ?? null}/>
     </section>
   );
 }
