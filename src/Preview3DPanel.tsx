@@ -78,7 +78,7 @@ export default function Preview3DPanel({ name, geometry }: Props) {
         <polygon points={pointsAttribute(scene.top)} fill="#e2ddd2" stroke="#4c5556" strokeWidth="2.5"/>
         {scene.holes.map((hole, index) => <polygon key={index} points={pointsAttribute(hole)} fill="#fbfbf9" stroke="#555e5f" strokeWidth="2"/>)}
         <text x="22" y="32" fill="#81817a" fontSize="13">ARRASTE PARA ORBITAR · ZOOM NOS CONTROLES</text>
-        <text x="22" y="476" fill="#81817a" fontSize="13">ESPESSURA: {geometry.thicknessMm} mm · PROJEÇÃO ORTOGRÁFICA</text>
+        <text x="22" y="476" fill="#81817a" fontSize="13">ESPESSURA: {geometry?.thicknessMm ?? 0} mm · PROJEÇÃO ORTOGRÁFICA</text>
       </svg> : <div className="nesting-empty"><strong>Selecione uma peça</strong><span>A prévia extrudada aparece quando houver uma geometria selecionada.</span></div>}
       <p className="editor-disclaimer">Prévia isométrica simplificada da extrusão do contorno. Ainda não é um modelador 3D sólido: não calcula superfícies curvas, colisões, ferramentas, usinagem ou tolerâncias de máquina.</p>
     </section>
