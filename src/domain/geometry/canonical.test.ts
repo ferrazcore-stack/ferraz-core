@@ -51,6 +51,19 @@ describe("canonical geometry", () => {
     expect(validateGeometry(withOutsideHole).issues.some(issue => issue.code === "HOLE_OUTSIDE_OUTER")).toBe(true);
   });
 
+  it("rejects a hole that starts inside but crosses the outer boundary", () => {
+    const crossingHole = { ...square, holes: [{ points: [{ x: 800, y: 200 }, { x: 1200, y: 200 }, { x: 1200, y: 400 }, { x: 800, y: 400 }] }] };
+    expect(validateGeometry(crossingHole).issues.some(issue => issue.code === "HOLE_OUTSIDE_OUTER")).toBe(true);
+  });
+
+  it("rejects overlapping internal contours", () => {
+    const overlapping = { ...square, holes: [
+      { points: [{ x: 100, y: 100 }, { x: 400, y: 100 }, { x: 400, y: 400 }, { x: 100, y: 400 }] },
+      { points: [{ x: 300, y: 200 }, { x: 600, y: 200 }, { x: 600, y: 500 }, { x: 300, y: 500 }] },
+    ] };
+    expect(validateGeometry(overlapping).issues.some(issue => issue.code === "HOLES_OVERLAP")).toBe(true);
+  });
+
   it("blocks fabrication while a measurement is inferred", () => {
     const revision = { ...approvedRevision, measurements: [{ ...confirmedMeasurements[0], state: "inferred" as const }] };
     const result = evaluateFabricationGate(revision);
