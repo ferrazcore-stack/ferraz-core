@@ -14,7 +14,7 @@ Núcleo técnico FERRAZ: domínio geométrico, medições, validações e regras
 
 ## Limites atuais
 
-Ainda não há editor 2D/3D, curvas, modelagem sólida, cortes/seções, renderização, nesting, pós-processador CNC ou integração com interface/banco. A biblioteca inicial não deve ser usada como única validação para liberar fabricação industrial.
+Ainda não há editor 2D/3D, curvas, modelagem sólida, cortes/seções, renderização, nesting de geometrias irregulares, tratamento de defeitos/áreas proibidas, pós-processador CNC ou integração operacional com interface/banco. A biblioteca inicial não deve ser usada como única validação para liberar fabricação industrial.
 
 ## Executar
 
