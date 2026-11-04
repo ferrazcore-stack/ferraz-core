@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nestPolygonParts, optimizePolygonNesting, type PolygonNestingPart, type PolygonNestingSheet } from "./polygon-bottom-left";
+import { nestPolygonParts, optimizePolygonNesting, polygonPartFromCanonicalGeometry, type PolygonNestingPart, type PolygonNestingSheet } from "./polygon-bottom-left";
 
 const sheet: PolygonNestingSheet = {
   id: "slab-01", widthMm: 100, heightMm: 80, marginMm: 5, kerfMm: 2,
@@ -14,6 +14,27 @@ const rectangle = (id: string, width: number, height: number): PolygonNestingPar
 });
 
 describe("deterministic polygon nesting v1", () => {
+  it("adapts validated canonical geometry into the nesting contract", () => {
+    const geometry = {
+      schemaVersion: 1 as const,
+      units: "mm" as const,
+      coordinateSystem: "piece-local" as const,
+      toleranceMm: 0.01,
+      outer: { points: [{ x: 0, y: 0 }, { x: 120, y: 0 }, { x: 120, y: 60 }, { x: 0, y: 60 }] },
+      holes: [],
+      thicknessMm: 20,
+    };
+    const part = polygonPartFromCanonicalGeometry({ id: "canonical-01", geometry, materialId: "quartzite-a" });
+    expect(part.outer).toHaveLength(4);
+    expect(part.thicknessMm).toBe(20);
+    expect(part.materialId).toBe("quartzite-a");
+    expect(() => polygonPartFromCanonicalGeometry({
+      id: "invalid",
+      geometry: { ...geometry, outer: { points: [{ x: 0, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }, { x: 10, y: 0 }] } },
+      materialId: "quartzite-a",
+    })).toThrow(/Geometria canônica inválida/);
+  });
+
   it("places a non-rectangular concave outline and preserves its polygon", () => {
     const lShape: PolygonNestingPart = {
       id: "l-counter",
