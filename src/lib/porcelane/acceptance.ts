@@ -1,5 +1,5 @@
 import { porcelaneKitchenScenario, simulatePorcelaneGates, validatePorcelaneScenario } from "./scenario";
-import { canApproveCutPlan, canInstallPiece, canLoadPiece, canReleasePiece, canStartCut, validateOrderConsistency } from "./domain";
+import { canApproveCutPlan, canInstallPiece, canLoadPiece, canReleasePiece, canStartCut, canStartProduction, validateOrderConsistency } from "./domain";
 import { porcelaneIntegratedOrder } from "./fixtures";
 
 export type AcceptanceResult = Readonly<{
@@ -21,6 +21,13 @@ export function runPorcelaneAcceptance(): AcceptanceResult {
   const cutGate = canStartCut(order, plan.id);
   const loadingGate = canLoadPiece(pieces[0]);
   const installationGate = canInstallPiece(pieces[0]);
+  const productionGate = canStartProduction(pieces[0], order);
+  const duplicateEnvironmentOrder = { ...order, environments: [...order.environments, order.environments[0]] };
+  const duplicateEnvironmentDetected = validateOrderConsistency(duplicateEnvironmentOrder).some(issue => issue.includes("Identificador de ambiente duplicado"));
+  const incompatibleOffcutOrder = { ...order, offcuts: [{ ...order.offcuts[0], materialCode: "OUTRO-MATERIAL" }] };
+  const incompatibleOffcutDetected = validateOrderConsistency(incompatibleOffcutOrder).some(issue => issue.includes("incompatível com material/espessura"));
+  const cutPlanWithoutApprovalIdentity = { ...order, cutPlans: order.cutPlans.map(item => ({ ...item, approvedBy: null })) };
+  const anonymousApprovalBlocked = !canStartCut(cutPlanWithoutApprovalIdentity, plan.id).allowed;
 
   const checks = [
     { id: "geometry.fixture", passed: geometry.valid && geometry.pieceCount === 3 && geometry.totalNetAreaM2 > 0,
@@ -33,6 +40,10 @@ export function runPorcelaneAcceptance(): AcceptanceResult {
     { id: "cut.allowed-with-reservation", passed: cutGate.allowed && gates.allowedCut, detail: cutGate.allowed ? "Corte liberado somente com plano aprovado e chapa reservada." : cutGate.blockers.join(" ") },
     { id: "loading.requires-inspection", passed: !loadingGate.allowed, detail: "Carregamento bloqueado porque a peça ainda não passou pela inspeção." },
     { id: "installation.requires-delivery", passed: !installationGate.allowed, detail: "Instalação bloqueada antes da confirmação de entrega." },
+    { id: "production.requires-valid-plan", passed: !productionGate.allowed, detail: "Produção exige plano válido e peça cortada; o cenário bloqueia o início antecipado." },
+    { id: "inventory.offcut-compatibility", passed: incompatibleOffcutDetected, detail: "Retalho incompatível com material/espessura de origem é rejeitado." },
+    { id: "order.unique-environment", passed: duplicateEnvironmentDetected, detail: "Identificadores duplicados de ambiente são rejeitados." },
+    { id: "cut.approval-auditable", passed: anonymousApprovalBlocked, detail: "Plano sem responsável de aprovação não libera corte." },
   ];
   return { passed: checks.every(check => check.passed), checks };
 }
