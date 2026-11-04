@@ -183,6 +183,20 @@ export default function Editor2DPanel() {
     const drag = dragRef.current;
     if (!drag) return;
     const point = pointerPosition(event);
+    if (drag.vertexIndex !== undefined) {
+      const piece = pieces.find(item => item.id === drag.id);
+      if (!piece) return;
+      const box = bounds(piece.geometry);
+      const cx = drag.centerX ?? (box.minX + box.maxX) / 2;
+      const cy = drag.centerY ?? (box.minY + box.maxY) / 2;
+      const angle = piece.rotationDeg * Math.PI / 180;
+      const dx = point.x - piece.x - cx;
+      const dy = point.y - piece.y - cy;
+      const local = { x: cx + dx * Math.cos(angle) + dy * Math.sin(angle), y: cy - dx * Math.sin(angle) + dy * Math.cos(angle) };
+      const nextPoint = snapEnabled ? { x: snap(local.x), y: snap(local.y) } : local;
+      setPieces(current => current.map(item => item.id === drag.id ? { ...item, geometry: { ...item.geometry, outer: { points: item.geometry.outer.points.map((vertex, index) => index === drag.vertexIndex ? nextPoint : vertex) } } } : item));
+      return;
+    }
     const dx = point.x - drag.pointerX;
     const dy = point.y - drag.pointerY;
     const x = snapEnabled ? snap(drag.pieceX + dx) : drag.pieceX + dx;
