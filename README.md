@@ -25,3 +25,7 @@ npm run build
 ```
 
 A especificação completa está em docs/CAD-CAM/00-ESPECIFICACAO-MESTRE-CAD-CAM.md.
+
+
+### Nesting poligonal (incremento em desenvolvimento)
+Foi adicionado um motor heurístico inicial para contornos poligonais côncavos, furos e defeitos de chapa em `src/domain/nesting/polygon-bottom-left.ts`. O resultado é explicitamente estimativo; não é um otimizador global nem gera plano CNC ou liberação de fabricação. Consulte a especificação CAD/CAM para limites e critérios de validação.
