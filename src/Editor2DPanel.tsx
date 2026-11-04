@@ -113,7 +113,7 @@ export default function Editor2DPanel() {
   const [projectLabel, setProjectLabel] = useState(storedDocument?.projectLabel ?? "Projeto local sem vínculo");
   const [revisions, setRevisions] = useState<EditorRevision[]>(() => storedDocument?.revisions ?? []);
   const [revisionName, setRevisionName] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>("piece-1");
+  const [selectedId, setSelectedId] = useState<string | null>(() => storedDocument?.pieces[0]?.id ?? "piece-1");
   const [past, setPast] = useState<Snapshot[]>([]);
   const [future, setFuture] = useState<Snapshot[]>([]);
   const [zoom, setZoom] = useState(0.75);
