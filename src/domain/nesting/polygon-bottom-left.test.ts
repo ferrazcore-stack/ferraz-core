@@ -140,6 +140,7 @@ describe("deterministic polygon nesting v1", () => {
     };
     expect(() => nestPolygonParts([sheet], [bowTie])).toThrow(/inválida/);
     expect(() => nestPolygonParts([sheet], [rectangle("same", 5, 5), rectangle("same", 6, 6)])).toThrow(/duplicado/);
+    expect(() => nestPolygonParts([sheet], [{ ...rectangle("bad-rotation", 5, 5), allowedRotationsDeg: [45] as never }])).toThrow(/rotações inválida/);
   });
 
   it("compares three deterministic ordering strategies and returns the best feasible result", () => {
