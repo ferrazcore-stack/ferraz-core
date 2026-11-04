@@ -24,40 +24,42 @@ const job: CamJob = {
 };
 
 describe("CAM safety validation", () => {
-  it("accepts a bounded draft for parameter simulation only", () => {
+  it("accepts bounded parameters for review without authorizing machine release", () => {
     const result = validateCamJob(job, machine, [tool]);
-    expect(result.validForSimulation).toBe(true);
+    expect(result.validForParameterReview).toBe(true);
     expect(result.validForMachineRelease).toBe(false);
-    expect(result.warnings.some(item => item.includes("não substitui simulação"))).toBe(true);
+    expect(result.releaseBlockers.some(item => item.includes("estado formal"))).toBe(true);
+    expect(result.warnings.some(item => item.includes("não simula trajetórias"))).toBe(true);
   });
 
-  it("blocks machine release when the post processor is not validated", () => {
+  it("allows parameter review but blocks release when the post processor is not validated", () => {
     const result = validateCamJob(job, { ...machine, postProcessor: { ...machine.postProcessor, state: "draft", checksum: undefined } }, [tool]);
-    expect(result.validForSimulation).toBe(false);
-    expect(result.blockers.some(item => item.includes("Pós-processador"))).toBe(true);
+    expect(result.validForParameterReview).toBe(true);
+    expect(result.validForMachineRelease).toBe(false);
+    expect(result.releaseBlockers.some(item => item.includes("Pós-processador"))).toBe(true);
   });
 
-  it("blocks an unvalidated machine and incompatible tools", () => {
-    const result = validateCamJob(job, { ...machine, validationState: "bench-tested" }, [{ ...tool, compatibleMachineIds: ["other-machine"] }]);
-    expect(result.validForSimulation).toBe(false);
-    expect(result.blockers.some(item => item.includes("Máquina ainda não"))).toBe(true);
-    expect(result.blockers.some(item => item.includes("não está liberada"))).toBe(true);
+  it("allows parameter review but blocks release for an unvalidated machine", () => {
+    const result = validateCamJob(job, { ...machine, validationState: "bench-tested" }, [tool]);
+    expect(result.validForParameterReview).toBe(true);
+    expect(result.validForMachineRelease).toBe(false);
+    expect(result.releaseBlockers.some(item => item.includes("Máquina ainda não"))).toBe(true);
   });
 
   it("blocks feed, spindle, depth-per-pass and safe Z beyond declared limits", () => {
     const unsafe = { ...job, operations: [{ ...job.operations[0], feedMmMin: 9000, spindleRpm: 13000, stepDownMm: 8, safeZMm: 300 }] };
     const result = validateCamJob(unsafe, machine, [tool]);
-    expect(result.validForSimulation).toBe(false);
+    expect(result.validForParameterReview).toBe(false);
     expect(result.blockers.some(item => item.includes("avanço excede"))).toBe(true);
     expect(result.blockers.some(item => item.includes("rotação excede"))).toBe(true);
     expect(result.blockers.some(item => item.includes("profundidade por passe"))).toBe(true);
     expect(result.blockers.some(item => item.includes("safe Z"))).toBe(true);
   });
 
-  it("blocks a tool type that does not match the operation and an excessive plunge feed", () => {
+  it("blocks an incompatible tool type and excessive plunge feed", () => {
     const drillOperation = { ...job, operations: [{ ...job.operations[0], type: "drill" as const, plungeMmMin: 9000 }] };
     const result = validateCamJob(drillOperation, machine, [tool]);
-    expect(result.validForSimulation).toBe(false);
+    expect(result.validForParameterReview).toBe(false);
     expect(result.blockers.some(item => item.includes("incompatível com a operação"))).toBe(true);
     expect(result.blockers.some(item => item.includes("mergulho excede"))).toBe(true);
   });
@@ -65,8 +67,9 @@ describe("CAM safety validation", () => {
   it("requires a named human approval for released jobs", () => {
     const released = { ...job, state: "released" as const };
     const result = validateCamJob(released, machine, [tool]);
-    expect(result.validForSimulation).toBe(false);
-    expect(result.blockers.some(item => item.includes("responsável técnico"))).toBe(true);
+    expect(result.validForParameterReview).toBe(true);
+    expect(result.validForMachineRelease).toBe(false);
+    expect(result.releaseBlockers.some(item => item.includes("responsável técnico"))).toBe(true);
   });
 
   it("never permits machine release from a draft state", () => {
