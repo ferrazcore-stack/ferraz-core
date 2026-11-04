@@ -146,3 +146,14 @@ Foi adicionado um algoritmo determinístico inicial para peças retangulares em 
 - Inclui testes para limites da chapa, rotação, veio, incompatibilidade de material/espessura, quantidade, determinismo e peças grandes demais.
 
 **Limites obrigatórios:** somente retângulos axis-aligned; não considera contornos irregulares, furos, recortes, defeitos, zonas proibidas, rotação angular livre, encaixe de curvas, otimização MaxRects/guillotine, corte CNC, sequência de corte, estabilidade/manuseio ou validação de máquina. Kerf é aplicado como folga conservadora no empacotamento. Percentual de aproveitamento usa área bruta da chapa, não uma simulação real de perda. Resultado é estimativa preliminar e não libera fabricação.
+
+
+## 22. Contrato explícito do resultado de nesting (incremento inicial)
+
+O resultado do algoritmo `deterministic-shelf-v1` agora identifica:
+- A chapa gerada e o template de estoque que lhe deu origem.
+- Material, espessura, dimensões, margem, kerf e direção de veio declarada.
+- Base do percentual de aproveitamento (`gross-sheet-area`), calculado sobre a área bruta das chapas utilizadas.
+- Estado `estimate-only` e avisos de limitações diretamente no payload, para reduzir o risco de uma estimativa ser interpretada como plano de fabricação.
+
+A entrada também rejeita IDs duplicados de chapas/peças e direções de veio fora do contrato. Isso melhora rastreabilidade e evita ambiguidade de identificação, mas não amplia o domínio geométrico suportado: o algoritmo continua limitado a retângulos alinhados aos eixos. Os testes novos verificam o estado estimativo, a origem do template e a rejeição de identificadores duplicados.
