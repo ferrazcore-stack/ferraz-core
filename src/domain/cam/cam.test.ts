@@ -54,6 +54,14 @@ describe("CAM safety validation", () => {
     expect(result.blockers.some(item => item.includes("safe Z"))).toBe(true);
   });
 
+  it("blocks a tool type that does not match the operation and an excessive plunge feed", () => {
+    const drillOperation = { ...job, operations: [{ ...job.operations[0], type: "drill" as const, plungeMmMin: 9000 }] };
+    const result = validateCamJob(drillOperation, machine, [tool]);
+    expect(result.validForSimulation).toBe(false);
+    expect(result.blockers.some(item => item.includes("incompatível com a operação"))).toBe(true);
+    expect(result.blockers.some(item => item.includes("mergulho excede"))).toBe(true);
+  });
+
   it("requires a named human approval for released jobs", () => {
     const released = { ...job, state: "released" as const };
     const result = validateCamJob(released, machine, [tool]);
