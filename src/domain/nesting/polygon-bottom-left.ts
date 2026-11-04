@@ -290,10 +290,19 @@ export function nestPolygonParts(
       throw new Error("Peça poligonal inválida ou ID duplicado: " + (part.id || "sem ID"));
     }
     partIds.add(part.id);
-    for (const hole of part.holes ?? []) {
+    const partHoles = part.holes ?? [];
+    for (let holeIndex = 0; holeIndex < partHoles.length; holeIndex += 1) {
+      const hole = partHoles[holeIndex];
       if (!validRing(hole) || !hole.every(point => pointInRing(point, part.outer)) ||
           ringsIntersect(hole, part.outer)) {
         throw new Error("Furo inválido ou fora do contorno externo da peça: " + part.id);
+      }
+      for (let otherIndex = holeIndex + 1; otherIndex < partHoles.length; otherIndex += 1) {
+        const other = partHoles[otherIndex];
+        if (ringsIntersect(hole, other) || hole.some(point => pointInRing(point, other)) ||
+            other.some(point => pointInRing(point, hole))) {
+          throw new Error("Furos sobrepostos ou aninhados não são aceitos: " + part.id);
+        }
       }
     }
     for (let instance = 1; instance <= (part.quantity ?? 1); instance += 1) expanded.push({ ...part, instance });
@@ -313,8 +322,8 @@ export function nestPolygonParts(
     let chosen: { sheet: typeof sheets[number]; x: number; y: number; rotation: typeof ROTATIONS[number]; outer: PolygonPoint[]; holes: PolygonPoint[][] } | undefined;
     const candidateSheets = compatible;
     for (const entry of candidateSheets) {
-      const rotations = entry.spec.grainDirection && entry.spec.grainDirection !== "none"
-        ? [0] as const
+      const rotations: Array<typeof ROTATIONS[number]> = entry.spec.grainDirection && entry.spec.grainDirection !== "none"
+        ? [0]
         : [...new Set(part.allowedRotationsDeg ?? [0])].sort((a, b) => a - b);
       if (rotations.some(rotation => !ROTATIONS.includes(rotation))) throw new Error("Rotação não suportada: " + part.id);
       for (const rotation of rotations) {
@@ -329,7 +338,7 @@ export function nestPolygonParts(
             holes: normalized.holes.map(hole => translate(hole, offset.x, offset.y)),
           };
           if (!fitsSheet(candidate, entry.spec) || collides(candidate, entry.obstacles, entry.spec.kerfMm)) continue;
-          chosen = { sheet: entry, x: offset.x, y: offset.y, rotation, outer: candidate.outer, holes: candidate.holes };
+          chosen = { sheet: entry, x: offset.x, y: offset.y, rotation, outer: candidate.outer, holes: candidate.holes ?? [] };
           break;
         }
         if (chosen) break;
