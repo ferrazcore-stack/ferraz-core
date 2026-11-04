@@ -229,16 +229,22 @@ export function nestRectangularParts(
       packedWidth = chosen.packedWidth;
       packedHeight = chosen.packedHeight;
     } else {
-      const template = compatibleTemplates[0];
-      const orientations = [false, ...(part.allowRotation && (template.grainDirection ?? "none") === "none" ? [true] : [])];
-      const valid = orientations.map(rotated => ({ rotated, size: fitsOrientation(part, template, rotated) }))
-        .filter(item => item.size.fitsEmpty)
-        .sort((a, b) => a.size.packedHeight - b.size.packedHeight || Number(a.rotated) - Number(b.rotated));
-      if (!valid.length) {
-        unplaced.push({ partId: part.id, instance: part.instance, reason: "Peça não cabe na área útil da chapa, mesmo sem outras peças." });
+      const validTemplates = compatibleTemplates.flatMap(template => {
+        const orientations = [false, ...(part.allowRotation && (template.grainDirection ?? "none") === "none" ? [true] : [])];
+        return orientations.map(rotated => ({ template, rotated, size: fitsOrientation(part, template, rotated) }))
+          .filter(item => item.size.fitsEmpty);
+      }).sort((a, b) =>
+        a.size.packedHeight - b.size.packedHeight ||
+        a.size.packedWidth - b.size.packedWidth ||
+        a.template.id.localeCompare(b.template.id) ||
+        Number(a.rotated) - Number(b.rotated)
+      );
+      if (!validTemplates.length) {
+        unplaced.push({ partId: part.id, instance: part.instance, reason: "Peça não cabe na área útil de nenhuma chapa compatível, mesmo sem outras peças." });
         continue;
       }
-      const chosen = valid[0];
+      const chosen = validTemplates[0];
+      const template = chosen.template;
       const suffix = workingSheets.filter(sheet => sheet.spec.id.startsWith(template.id + "-auto-")).length + 1;
       const newSheet: WorkingSheet = {
         spec: { ...template, id: template.id + "-auto-" + suffix },
