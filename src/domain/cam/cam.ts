@@ -101,12 +101,15 @@ export function validateCamJob(
     }
     if (![tool.diameterMm, tool.maxRpm, tool.maxFeedMmMin, tool.maxDepthPerPassMm].every(value => Number.isFinite(value) && value > 0)) blockers.push(`Ferramenta ${tool.name} possui parâmetros físicos inválidos.`);
     if (!tool.approved) blockers.push(`Ferramenta ${tool.name} ainda não foi aprovada.`);
+    const allowedTools: Record<CamOperationType, ToolDefinition["type"][]> = { "contour-cut": ["saw-blade", "router-bit"], pocket: ["router-bit"], drill: ["drill-bit"], "edge-polish": ["polishing-head"] };
+    if (!allowedTools[operation.type].includes(tool.type)) blockers.push(`Ferramenta ${tool.name} incompatível com a operação ${operation.type}.`);
     if (!tool.compatibleMachineIds.includes(machine.id)) blockers.push(`Ferramenta ${tool.name} não está liberada para a máquina ${machine.name}.`);
     const positive = [operation.depthMm, operation.safeZMm, operation.feedMmMin, operation.plungeMmMin, operation.spindleRpm, operation.stepDownMm];
     if (!positive.every(value => Number.isFinite(value) && value > 0)) blockers.push(`Operação ${operation.id}: profundidades, avanço, rotação e passes devem ser positivos e finitos.`);
     if (operation.safeZMm > machine.workEnvelopeMm.z) blockers.push(`Operação ${operation.id}: safe Z excede o envelope útil da máquina.`);
     if (operation.depthMm > machine.workEnvelopeMm.z) blockers.push(`Operação ${operation.id}: profundidade excede o eixo Z útil.`);
     if (operation.feedMmMin > Math.min(machine.maxFeedMmMin, tool.maxFeedMmMin)) blockers.push(`Operação ${operation.id}: avanço excede o limite da máquina ou ferramenta.`);
+    if (operation.plungeMmMin > Math.min(machine.maxFeedMmMin, tool.maxFeedMmMin)) blockers.push(`Operação ${operation.id}: avanço de mergulho excede o limite da máquina ou ferramenta.`);
     if (operation.spindleRpm > Math.min(machine.maxSpindleRpm, tool.maxRpm)) blockers.push(`Operação ${operation.id}: rotação excede o limite da máquina ou ferramenta.`);
     if (operation.stepDownMm > tool.maxDepthPerPassMm) blockers.push(`Operação ${operation.id}: profundidade por passe excede o limite da ferramenta.`);
     if (operation.plungeMmMin > operation.feedMmMin) warnings.push(`Operação ${operation.id}: avanço de mergulho maior que o avanço de corte; revisar.`);
