@@ -1,17 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Bell, ChevronDown, ClipboardList, Factory, FileText, LayoutDashboard, Plus, Search, Settings, Truck, Users, WalletCards, X, ArrowUpRight } from "lucide-react";
+import { Bell, ChevronDown, ClipboardList, Factory, FileText, LayoutDashboard, Plus, Search, Settings, Truck, Users, WalletCards, X, ArrowUpRight, Layers } from "lucide-react";
 import "./index.css";
 import { loadDashboardOrders, type DashboardOrder } from "./lib/dashboard";
 import { supabaseConfigured } from "./lib/supabase";
 import CommercialPanel from "./CommercialPanel";
 import OperationsPanel from "./OperationsPanel";
+import NestingPanel from "./NestingPanel";
 
 type NavItem={label:string;icon:typeof LayoutDashboard;section:string};
 const navItems:NavItem[]=[
  {label:"Dashboard",icon:LayoutDashboard,section:"Geral"},{label:"Clientes e obras",icon:Users,section:"Geral"},
  {label:"Orçamentos",icon:FileText,section:"Geral"},{label:"Pedidos",icon:ClipboardList,section:"Geral"},
  {label:"Medição técnica",icon:Search,section:"Operação"},{label:"Produção",icon:Factory,section:"Operação"},
- {label:"Expedição",icon:Truck,section:"Operação"},{label:"Financeiro",icon:WalletCards,section:"Gestão"},
+ {label:"Expedição",icon:Truck,section:"Operação"},{label:"Paginação",icon:Layers,section:"Operação"},{label:"Financeiro",icon:WalletCards,section:"Gestão"},
  {label:"Configurações",icon:Settings,section:"Gestão"}];
 
 const demoOrders:DashboardOrder[]=[
@@ -78,7 +79,7 @@ function App(){
     </article></section>
     <section className="quick"><div><span className="eyebrow">ACESSO RÁPIDO</span><h2>Ações frequentes</h2></div><button onClick={()=>nav("Orçamentos")}><FileText/>Criar orçamento</button><button onClick={()=>nav("Clientes e obras")}><Users/>Cadastrar cliente</button><button onClick={()=>nav("Pedidos")}><ClipboardList/>Abrir pedido</button><button onClick={()=>nav("Expedição")}><Truck/>Novo romaneio</button></section>
     <p className="demo-note">{supabaseConfigured?"Dashboard conectado à fonte oficial de pedidos.":"Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY para ativar os dados oficiais."}</p>
-   </>:<CommercialPanel module={active} search={search} onToast={msg}/>}
+   </>:active==="Paginação"?<NestingPanel/>:<CommercialPanel module={active} search={search} onToast={msg}/>}
   </main>
   {notice&&<div className="overlay" onMouseDown={()=>setNotice(false)}><aside className="drawer" onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">CENTRAL</span><h2>Notificações</h2></div><button className="close" onClick={()=>setNotice(false)}><X/></button></div><div className="notification"><b>Prazo hoje</b><span>Residencial Beira Mar</span><small>Próxima etapa operacional</small></div><div className="notification"><b>Fonte de dados</b><span>{supabaseConfigured?"Supabase conectado":"Modo demonstração"}</span><small>{dataError?"Há uma falha de leitura que precisa ser corrigida.":"Status de configuração"}</small></div></aside></div>}
   {budget&&<div className="overlay" onMouseDown={()=>setBudget(false)}><form className="modal" onSubmit={e=>{e.preventDefault();setBudget(false);msg("Novo orçamento iniciado. A gravação comercial será conectada na próxima etapa.")}} onMouseDown={e=>e.stopPropagation()}><div className="drawer-head"><div><span className="eyebrow">COMERCIAL</span><h2>Novo orçamento</h2></div><button type="button" className="close" onClick={()=>setBudget(false)}><X/></button></div><label>Cliente<input required placeholder="Nome do cliente"/></label><label>Obra<input required placeholder="Nome ou identificação da obra"/></label><div className="modal-actions"><button type="button" className="secondary" onClick={()=>setBudget(false)}>Cancelar</button><button className="primary">Continuar</button></div></form></div>}
