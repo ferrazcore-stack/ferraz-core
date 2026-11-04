@@ -11,12 +11,13 @@ Núcleo técnico FERRAZ: domínio geométrico, medições, validações e regras
 - Gate de domínio que bloqueia fabricação quando geometria, medidas, material ou aprovação não estão confirmados.
 - Nesting retangular determinístico inicial, com margens, kerf, material/espessura, rotação condicionada ao veio e rastreio das peças alocadas. O resultado declara `estimate-only`, informa a base do aproveitamento e mantém a origem do template de chapa.
 - Editor 2D interativo conectado à geometria canônica: seleção, arraste, grade de 10 mm, posicionamento numérico, redimensionamento, edição de vértices, desenho livre de contornos, cotas gerais, rotação, duplicação, exclusão, zoom e desfazer/refazer. Rascunhos e revisões são armazenados localmente no navegador.
+- Prévia 3D isométrica extrudada da geometria selecionada, com órbita de câmera e zoom; é uma visualização aproximada, não um modelador sólido.
 - Contratos iniciais de CAM para cadastro de máquinas, ferramentas, operações e trabalhos, com validação de limites, compatibilidade, pós-processador e aprovação humana. A validação não gera G-code nem libera máquina.
 - Testes Vitest e workflow de CI com testes e build.
 
 ## Limites atuais
 
-O editor 2D ainda é uma primeira etapa: trabalha com peças poligonais já existentes e primitivas retangulares; não possui edição de furos, cotas de fabricação completas, camadas, sincronização com servidor ou vínculo ao cadastro oficial de projeto/cliente. Ainda não há editor 3D, modelagem sólida, cortes/seções, simulação de trajetória, detecção de colisões, geração de G-code, pós-processador executável ou integração operacional com máquinas. A biblioteca e a interface não devem ser usadas como única validação para liberar fabricação industrial.
+O editor 2D ainda é uma primeira etapa: trabalha com peças poligonais já existentes e primitivas retangulares; não possui edição de furos, cotas de fabricação completas, camadas, sincronização com servidor ou vínculo ao cadastro oficial de projeto/cliente. Ainda não há modelador 3D sólido/editável, modelagem de superfícies, cortes/seções, simulação de trajetória, detecção de colisões, geração de G-code, pós-processador executável ou integração operacional com máquinas. A biblioteca e a interface não devem ser usadas como única validação para liberar fabricação industrial.
 
 ## Executar
 
@@ -45,3 +46,7 @@ O editor salva automaticamente o rascunho e até 30 snapshots de revisão em `lo
 
 ### Base CAM/CNC — contratos e gates iniciais
 O módulo `src/domain/cam/cam.ts` define contratos de máquina, envelope/eixos, ferramenta, operação e trabalho CAM, com validações de compatibilidade, limites de rotação/avanço/profundidade, safe Z, sequência e estado do pós-processador. Os testes cobrem bloqueios de segurança. Esta camada é somente validação de dados: não calcula trajetória, não simula colisão, não gera código de máquina e não libera fabricação. Um pós-processador só poderá ser marcado validado após implementação e ensaio específico no controlador e máquina correspondentes.
+
+
+### Prévia 3D inicial
+`src/Preview3DPanel.tsx` projeta o contorno canônico selecionado como uma extrusão ortográfica simplificada, com rotação da câmera por arraste e zoom. Não é um editor 3D completo, não permite editar vértices no espaço, não modela superfícies curvas e não executa física, colisões ou CAM.
