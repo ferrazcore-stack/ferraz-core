@@ -48,7 +48,7 @@ describe("deterministic polygon nesting v1", () => {
       ...sheet,
       defects: [{
         id: "crack-zone",
-        outer: [{ x: 5, y: 5 }, { x: 55, y: 5 }, { x: 55, y: 75 }, { x: 5, y: 75 }],
+        outer: [{ x: 5, y: 5 }, { x: 95, y: 5 }, { x: 95, y: 75 }, { x: 5, y: 75 }],
       }],
     };
     const result = nestPolygonParts([defectSheet], [rectangle("piece", 20, 20)]);
@@ -73,7 +73,7 @@ describe("deterministic polygon nesting v1", () => {
   });
 
   it("keeps the required kerf clearance between separate parts", () => {
-    const result = nestPolygonParts([{ ...sheet, widthMm: 42, heightMm: 20, marginMm: 0, kerfMm: 3 }], [
+    const result = nestPolygonParts([{ ...sheet, widthMm: 43, heightMm: 20, marginMm: 0, kerfMm: 3 }], [
       rectangle("a", 20, 10), rectangle("b", 20, 10),
     ]);
     expect(result.placements).toHaveLength(2);
@@ -85,7 +85,7 @@ describe("deterministic polygon nesting v1", () => {
 
   it("reports material and thickness mismatches as unplaced", () => {
     const result = nestPolygonParts([sheet], [{ ...rectangle("wrong", 10, 10), materialId: "granite-b" }]);
-    expect(result.unplaced[0].reason).toContain("materialo");
+    expect(result.unplaced[0].reason).toContain("material e espessura");
   });
 
   it("rejects invalid self-intersecting outlines and duplicate identifiers", () => {
