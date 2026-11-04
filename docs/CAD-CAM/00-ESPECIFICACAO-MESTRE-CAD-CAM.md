@@ -1,6 +1,6 @@
 # FERRAZ — Especificação Mestre CAD/CAM para Marmoraria
 **Versão:** 1.0  
-**Status:** Requisitos recebidos e consolidados; implementação ainda não validada.  
+**Status:** Requisitos consolidados; primeira biblioteca de geometria canônica e gates de domínio implementados em src/domain/geometry/canonical.ts, com testes adicionados. Editor 2D/3D, cortes, nesting, exportação e integração operacional ainda não implementados/validados.  
 **Produto:** FERRAZ — plataforma integrada de gestão, projetos e fabricação de marmoraria  
 **Módulo:** Editor Técnico CAD/CAM, Modelagem 3D, Paginação e Documentação
 
@@ -120,3 +120,16 @@ Cada fase exige critérios de aceite, testes e demonstração com dados de refer
 
 ---
 Este documento consolida os requisitos recebidos da responsável pelo produto. Ele define intenção e escopo; não declara que qualquer funcionalidade esteja implementada ou validada.
+
+
+## 20. Estado incremental do núcleo geométrico (04/11/2026)
+
+Foi adicionada uma primeira biblioteca TypeScript independente da interface, com:
+- Modelo canônico versionado de contorno externo, furos, espessura, unidade em milímetros e sistema de coordenadas local à peça.
+- Cálculo de área 2D.
+- Validação inicial de coordenadas finitas, vértices duplicados, auto-interseção, área, espessura e posição de furos.
+- Modelo de medidas com unidade, origem, método, estado, tolerância e responsável/data de confirmação.
+- Gate de domínio que bloqueia liberação quando geometria, medidas, material ou aprovação humana não atendem aos requisitos.
+- Testes automatizados para geometria válida/inválida e bloqueios de fabricação.
+
+**Limites conhecidos:** a biblioteca ainda não foi conectada à interface, banco ou pipeline de importação; não representa B-rep/solid modeling; não valida interseção entre todos os furos, espessuras por aresta, curvas, sólidos, tolerâncias de máquina ou nesting. A implementação é um primeiro contrato de domínio, não um motor CAD/CAM pronto para produção.
