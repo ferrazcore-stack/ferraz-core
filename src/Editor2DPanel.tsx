@@ -15,7 +15,7 @@ type EditorPiece = {
   rotationDeg: number;
   geometry: CanonicalPieceGeometry;
 };
-type Snapshot = EditorPiece[];\ntype DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number };
+type Snapshot = EditorPiece[];\ntype DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number; centerX?: number; centerY?: number };
 
 const VIEW_W = 1600;
 const VIEW_H = 1000;
@@ -177,7 +177,7 @@ export default function Editor2DPanel() {
     const y = snapEnabled ? snap(drag.pieceY + dy) : drag.pieceY + dy;
     setPieces(current => current.map(piece => piece.id === drag.id ? { ...piece, x, y } : piece));
   };
-  const startVertexDrag = (event: React.PointerEvent<SVGCircleElement>, piece: EditorPiece, vertexIndex: number) => {\n    event.preventDefault();\n    event.stopPropagation();\n    setSelectedId(piece.id);\n    const point = pointerPosition(event);\n    dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex };\n    svgRef.current?.setPointerCapture(event.pointerId);\n  };\n  const endDrag = () => {
+  const startVertexDrag = (event: React.PointerEvent<SVGCircleElement>, piece: EditorPiece, vertexIndex: number) => {\n    event.preventDefault();\n    event.stopPropagation();\n    setSelectedId(piece.id);\n    const point = pointerPosition(event);\n    const box = bounds(piece.geometry);\n    dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex, centerX: (box.minX + box.maxX) / 2, centerY: (box.minY + box.maxY) / 2 };\n    svgRef.current?.setPointerCapture(event.pointerId);\n  };\n  const endDrag = () => {
     if (!dragRef.current) return;
     const before = dragRef.current.before;
     setPast(current => [...current.slice(-49), before]);
