@@ -52,7 +52,13 @@ export interface PolygonNestingResult {
   status: "estimate-only";
   placements: PolygonPlacement[];
   unplaced: Array<{ partId: string; instance: number; reason: string }>;
-  sheetsUsed: string[];
+  sheetsUsed: Array<{
+    id: string;
+    widthMm: number;
+    heightMm: number;
+    marginMm: number;
+    defects: PolygonDefect[];
+  }>;
   placedAreaMm2: number;
   grossSheetAreaMm2: number;
   utilizationPercent: number;
@@ -400,7 +406,13 @@ export function nestPolygonParts(
     status: "estimate-only",
     placements,
     unplaced,
-    sheetsUsed: usedSheetIds,
+    sheetsUsed: usedSheets.map(entry => ({
+      id: entry.spec.id,
+      widthMm: entry.spec.widthMm,
+      heightMm: entry.spec.heightMm,
+      marginMm: entry.spec.marginMm,
+      defects: entry.spec.defects ?? [],
+    })),
     placedAreaMm2,
     grossSheetAreaMm2,
     utilizationPercent: grossSheetAreaMm2 ? Number((placedAreaMm2 / grossSheetAreaMm2 * 100).toFixed(2)) : 0,
