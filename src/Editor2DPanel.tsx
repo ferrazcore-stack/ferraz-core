@@ -15,13 +15,18 @@ type EditorPiece = {
   rotationDeg: number;
   geometry: CanonicalPieceGeometry;
 };
-type Snapshot = EditorPiece[];\ntype DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number; centerX?: number; centerY?: number };
+type Snapshot = EditorPiece[];
+type DragState = { id: string; pointerX: number; pointerY: number; pieceX: number; pieceY: number; before: Snapshot; vertexIndex?: number; centerX?: number; centerY?: number };
 
 const VIEW_W = 1600;
 const VIEW_H = 1000;
 const GRID = 10;
 
-function lGeometry(): CanonicalPieceGeometry {\n  return { schemaVersion: 1, units: "mm", coordinateSystem: "piece-local", toleranceMm: 0.01, thicknessMm: 20, outer: { points: [{ x: 0, y: 0 }, { x: 1400, y: 0 }, { x: 1400, y: 500 }, { x: 600, y: 500 }, { x: 600, y: 900 }, { x: 0, y: 900 }] }, holes: [] };\n}\n\nfunction rectangleGeometry(width: number, height: number, thickness = 20): CanonicalPieceGeometry {
+function lGeometry(): CanonicalPieceGeometry {
+  return { schemaVersion: 1, units: "mm", coordinateSystem: "piece-local", toleranceMm: 0.01, thicknessMm: 20, outer: { points: [{ x: 0, y: 0 }, { x: 1400, y: 0 }, { x: 1400, y: 500 }, { x: 600, y: 500 }, { x: 600, y: 900 }, { x: 0, y: 900 }] }, holes: [] };
+}
+
+function rectangleGeometry(width: number, height: number, thickness = 20): CanonicalPieceGeometry {
   return {
     schemaVersion: 1,
     units: "mm",
@@ -122,7 +127,14 @@ export default function Editor2DPanel() {
     setSelectedId(id);
     setNotice("Nova peça retangular criada. Ajuste suas dimensões no painel.");
   };
-  const addLPiece = () => {\n    const id = `piece-${Date.now()}`;\n    const next = [...pieces, { id, name: `Bancada em L ${pieces.length + 1}`, x: 180, y: 160, rotationDeg: 0, geometry: lGeometry() }];\n    commit(next);\n    setSelectedId(id);\n    setNotice("Peça em L criada. Ajuste sua posição e dimensões.");\n  };\n  const duplicate = () => {
+  const addLPiece = () => {
+    const id = `piece-${Date.now()}`;
+    const next = [...pieces, { id, name: `Bancada em L ${pieces.length + 1}`, x: 180, y: 160, rotationDeg: 0, geometry: lGeometry() }];
+    commit(next);
+    setSelectedId(id);
+    setNotice("Peça em L criada. Ajuste sua posição e dimensões.");
+  };
+  const duplicate = () => {
     if (!selected) return;
     const id = `piece-${Date.now()}`;
     commit([...pieces, { ...selected, id, name: `${selected.name} — cópia`, x: selected.x + 80, y: selected.y + 80, geometry: structuredClone(selected.geometry) }]);
@@ -177,7 +189,16 @@ export default function Editor2DPanel() {
     const y = snapEnabled ? snap(drag.pieceY + dy) : drag.pieceY + dy;
     setPieces(current => current.map(piece => piece.id === drag.id ? { ...piece, x, y } : piece));
   };
-  const startVertexDrag = (event: React.PointerEvent<SVGCircleElement>, piece: EditorPiece, vertexIndex: number) => {\n    event.preventDefault();\n    event.stopPropagation();\n    setSelectedId(piece.id);\n    const point = pointerPosition(event);\n    const box = bounds(piece.geometry);\n    dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex, centerX: (box.minX + box.maxX) / 2, centerY: (box.minY + box.maxY) / 2 };\n    svgRef.current?.setPointerCapture(event.pointerId);\n  };\n  const endDrag = () => {
+  const startVertexDrag = (event: React.PointerEvent<SVGCircleElement>, piece: EditorPiece, vertexIndex: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedId(piece.id);
+    const point = pointerPosition(event);
+    const box = bounds(piece.geometry);
+    dragRef.current = { id: piece.id, pointerX: point.x, pointerY: point.y, pieceX: piece.x, pieceY: piece.y, before: pieces, vertexIndex, centerX: (box.minX + box.maxX) / 2, centerY: (box.minY + box.maxY) / 2 };
+    svgRef.current?.setPointerCapture(event.pointerId);
+  };
+  const endDrag = () => {
     if (!dragRef.current) return;
     const before = dragRef.current.before;
     setPast(current => [...current.slice(-49), before]);
