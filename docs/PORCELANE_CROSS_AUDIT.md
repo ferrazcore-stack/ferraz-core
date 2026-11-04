@@ -127,3 +127,16 @@ Não inventar valores nem reconstruir fórmulas a partir de suposições. Até r
 ## 8. Critério de conclusão desta auditoria
 
 Esta auditoria parcial está concluída como comparação entre baseline funcional e código PORCELANE inspecionado. A auditoria completa de três fontes continua aberta até a recuperação da planilha e execução de testes automatizados. Nenhuma migration, importação, alteração de Supabase, deploy ou mudança de produção foi feita.
+
+
+## 9. Aditivo de auditoria — planilha mestra recebida posteriormente
+
+Em revisão posterior, o arquivo `Planilha_Mestra_Integrada_Gestao_Marmoraria.xlsx` foi disponibilizado e teve suas 85 abas inventariadas e examinadas em nível estrutural. A afirmação da seção 7 de que o arquivo não estava disponível descreve o estado da auditoria original e fica superada por este aditivo. A auditoria ampliada está em [PORCELANE_AUDITORIA_85_ABAS.md](./PORCELANE_AUDITORIA_85_ABAS.md).
+
+A planilha estabelece Base44 como fonte oficial dos dados operacionais e Excel como apoio de organização/auditoria/importação/exportação. Isso deve ser reconciliado com a arquitetura anterior que previa Supabase: nenhum backend deve ser conectado nesta fase; a decisão de persistência deve ocorrer após validar contratos e segurança. Supabase permanece expressamente por último.
+
+Foram acrescentados requisitos de propostas versionadas, aditivos, desenho 2D/3D e revisões, normalização de unidades em mm, escala 1:1, liberação parcial por peça/revisão, OC e OA distintas mas vinculadas às mesmas peças/revisão, estoque por chapa/lote, retalhos inspecionados, nesting por material, apontamentos de produção, QC/retrabalho, expedição parcial e termo final único, conciliação financeira e segurança por organização.
+
+A conciliação PED-000107 contém divergências entre linhas impressas, rodapés e anotações manuscritas. Os números desse caso não são regras gerais e não devem ser corrigidos automaticamente. A planilha exige manter pendências e bloquear fechamento até resolver diferenças e obter a revisão de projeto ausente.
+
+O inventário e a extração de requisitos não equivalem à homologação célula a célula de todas as fórmulas, nomes definidos e validações. Essa verificação permanece como etapa de testes. Nenhum dado do XLSX foi copiado para o repositório; o arquivo não foi versionado.
