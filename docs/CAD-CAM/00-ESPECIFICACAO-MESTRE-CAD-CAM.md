@@ -163,6 +163,7 @@ A entrada também rejeita IDs duplicados de chapas/peças e direções de veio f
 
 Foi acrescentado `src/domain/nesting/polygon-bottom-left.ts`, separado do algoritmo retangular, para iniciar a paginação com contornos poligonais:
 - Contornos externos côncavos e furos poligonais.
+- Adaptador que consome a geometria canônica compartilhada e valida a peça antes de convertê-la para a entrada do nesting.
 - Defeitos de chapa representados como regiões poligonais proibidas.
 - Restrições de material e espessura, com quantidade de chapas físicas disponível por modelo de estoque.
 - Margem da chapa e distância mínima entre contornos tratada como kerf conservador.
