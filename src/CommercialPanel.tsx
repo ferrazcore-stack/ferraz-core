@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { Building2, Plus, Users, X } from "lucide-react";
 import { createBudget, createCustomer, createProject, getCommercialContext, loadBudgets, loadCustomers, loadProjects, type Budget, type Customer, type Project } from "./lib/commercial";
 
