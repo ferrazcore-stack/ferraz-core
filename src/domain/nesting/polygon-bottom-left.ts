@@ -324,7 +324,7 @@ export function nestPolygonParts(
     for (const entry of candidateSheets) {
       const rotations: Array<typeof ROTATIONS[number]> = entry.spec.grainDirection && entry.spec.grainDirection !== "none"
         ? [0]
-        : [...new Set(part.allowedRotationsDeg ?? [0])].sort((a, b) => a - b);
+        : [...new Set(part.allowedRotationsDeg ?? [0])].sort((a, b) => a - b) as Array<typeof ROTATIONS[number]>;
       if (rotations.some(rotation => !ROTATIONS.includes(rotation))) throw new Error("Rotação não suportada: " + part.id);
       for (const rotation of rotations) {
         const normalized = normalizeRings(part, rotation);
