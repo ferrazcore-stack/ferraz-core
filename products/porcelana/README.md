@@ -12,6 +12,8 @@
 6. [Plano de entrega e gates](06-PLANO-DE-ENTREGA.md)
 7. [Qualidade, auditoria e homologação](07-QUALIDADE-E-HOMOLOGACAO.md)
 8. [Registro de decisões](08-REGISTRO-DE-DECISOES.md)
+9. [Arquitetura técnica do piloto](09-ARQUITETURA-TECNICA-DO-PILOTO.md)
+10. [Painel de execução](10-PAINEL-DE-EXECUCAO.md)
 
 ## Regra de escopo
 O segmento, a oferta comercial, o público prioritário e os processos específicos da Porcelana ainda precisam ser confirmados por evidências. O nome “Porcelana” não será usado para inferir que a empresa atua com louças, revestimentos, decoração ou qualquer outro setor.
