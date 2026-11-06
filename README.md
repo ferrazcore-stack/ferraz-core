@@ -33,3 +33,10 @@ A arquitetura do ecossistema está documentada em [docs/00-ARQUITETURA-MESTRE.md
 ## Processo de mudança
 
 Mudanças estruturais devem ser feitas em branch, revisadas por pull request, testadas e aprovadas antes de integrar à branch principal. Toda alteração deve indicar motivo, impacto, evidências e plano de reversão quando aplicável.
+
+
+## Produto-piloto: Porcelana
+
+A especificação do primeiro produto-piloto está em [products/porcelana/README.md](products/porcelana/README.md). Ela contém carta do produto, protocolo de descoberta, requisitos, experiência e marca, fluxo de agentes, plano de entrega, homologação e registro de decisões.
+
+**Importante:** o segmento e o escopo funcional da Porcelana permanecem em descoberta. A documentação não declara funcionalidades implementadas nem autoriza publicação ou produção.
