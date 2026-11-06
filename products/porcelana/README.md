@@ -14,6 +14,8 @@
 8. [Registro de decisões](08-REGISTRO-DE-DECISOES.md)
 9. [Arquitetura técnica do piloto](09-ARQUITETURA-TECNICA-DO-PILOTO.md)
 10. [Painel de execução](10-PAINEL-DE-EXECUCAO.md)
+11. [Direção estratégica de marca e marketing](11-DIRECAO-ESTRATEGICA-DE-MARCA-E-MARKETING.md)
+12. [Briefing mestre para Claude — identidade visual](12-BRIEFING-MESTRE-PARA-CLAUDE-IDENTIDADE-VISUAL.md)
 
 ## Regra de escopo
 O segmento, a oferta comercial, o público prioritário e os processos específicos da Porcelana ainda precisam ser confirmados por evidências. O nome “Porcelana” não será usado para inferir que a empresa atua com louças, revestimentos, decoração ou qualquer outro setor.
