@@ -101,4 +101,5 @@ Legenda: ✅ já existe e funciona · 📄 está documentado · 🧩 existe parc
 - Começar pela marmoraria, com base preparada para virar construção civil depois.
 - **07/11/2026 — O produto é um SaaS** (um sistema vendido por assinatura para várias marmorarias), que controla toda a estrutura.
 - **07/11/2026 — A Porcelane é o projeto piloto** (primeira empresa a usar). O fluxo do SaaS segue a documentação da Porcelane, com ajustes.
-- Pendente: o app Porcelane atual (Lovable) será substituído ou conectado? Decidir depois de ler a documentação da Porcelane.
+- Pendente: o app Porcelane atual (Lovable) será substituído ou conectado? A documentação da Porcelane foi lida (07/11/2026). O sistema já tem uma API somente leitura para o FERRAZ, então a recomendação é **conectar**. Aguardando a fundadora.
+- Os detalhes do cliente piloto ficam fora deste repositório, porque ele é público.
