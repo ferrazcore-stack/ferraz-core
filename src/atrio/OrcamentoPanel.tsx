@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import type { Ambiente, Condicao } from "../lib/atrio/orcamento";
 import { totalOrcamento, condicaoDoCliente } from "../lib/atrio/orcamento";
 import { lerConfig, salvarOrcamento, listarOrcamentos, type Config } from "../lib/atrio/orcamentoApi";
+import { calcularDesconto } from "../lib/atrio/desconto";
 
 type Props = { empresaId: string; podeGravarInternos: boolean };
 
@@ -22,6 +23,7 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
   const [prazoQtd, setPrazoQtd] = useState("");
   const [prazoTipo, setPrazoTipo] = useState<"uteis" | "corridos">("uteis");
   const [frete, setFrete] = useState("0");
+  const [desconto, setDesconto] = useState("0");
   const [entradaPct, setEntradaPct] = useState("");
   const [parcelas, setParcelas] = useState("1");
   const [formaEntrada, setFormaEntrada] = useState("pix");
@@ -46,7 +48,10 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
     formaEntrada,
     formaSaldo,
   };
-  const total = config ? totalOrcamento(ambientes, n(frete), config) : null;
+  const precoCheio = config ? totalOrcamento(ambientes, n(frete), config) : null;
+  const descontoRs = n(desconto) ?? 0;
+  const folga = calcularDesconto(precoCheio, descontoRs, config?.descontoMaximo ?? null);
+  const total = precoCheio != null ? precoCheio - descontoRs : null;
   const cond = total != null ? condicaoDoCliente(total, condicao) : null;
 
   function atualizar(i: number, campo: keyof Ambiente, valor: string) {
@@ -72,13 +77,14 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
           prazoTipo,
           ambientes: ambientes.map((a) => ({ ...a, nome: a.nome || "Ambiente" })),
           frete: n(frete),
+          descontoRs,
           condicao,
           formas: { entrada: formaEntrada, saldo: formaSaldo },
         },
         config,
       );
       setAviso("Orçamento salvo.");
-      setCliente(""); setObra(""); setAmbientes([vazio()]);
+      setCliente(""); setObra(""); setAmbientes([vazio()]); setDesconto("0");
       await carregar();
     } catch (e) {
       setErro(e instanceof Error ? e.message : "Não foi possível salvar.");
@@ -120,6 +126,18 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
           ))}
           <button type="button" className="atrio-btn secundario" onClick={() => setAmbientes((l) => [...l, vazio()])}>Adicionar ambiente</button>
 
+          <h2>Desconto</h2>
+          <label>Desconto (R$)<input inputMode="decimal" value={desconto} onChange={(e) => setDesconto(e.target.value)} /></label>
+          <div className="atrio-card">
+            {folga.situacao === "indisponivel" && <span>Desconto máximo da empresa não configurado.</span>}
+            {folga.situacao !== "indisponivel" && (
+              <>
+                <span>Você ainda pode dar: R$ {(folga.disponivelRs as number).toFixed(2)}</span>
+                {folga.situacao === "acima" && <span className="atrio-erro">Passou do limite. O orçamento vai para aprovação.</span>}
+              </>
+            )}
+          </div>
+
           <h2>Pagamento</h2>
           <label>Entrada (%)<input inputMode="decimal" value={entradaPct} onChange={(e) => setEntradaPct(e.target.value)} /></label>
           <label>Parcelas do saldo<input inputMode="numeric" value={parcelas} onChange={(e) => setParcelas(e.target.value)} /></label>
@@ -128,6 +146,7 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
 
           <div className="atrio-card">
             <strong>Total: {total == null ? "preencha a configuração e os valores" : total.toFixed(2)}</strong>
+            {precoCheio != null && <span>Preço cheio: {precoCheio.toFixed(2)}</span>}
             {cond && <span>Entrada {cond.entrada.toFixed(2)} · {cond.parcelas.length}x de {cond.parcelas[0].valor.toFixed(2)}</span>}
           </div>
 
@@ -144,7 +163,7 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
         {lista.length === 0 ? <p>Nenhum orçamento ainda.</p> : (
           <ul className="atrio-lista">
             {lista.map((o) => (
-              <li key={o.id}><span>{o.codigo} · {o.cliente} · {o.obra}</span><strong>{o.total == null ? "—" : Number(o.total).toFixed(2)}</strong></li>
+              <li key={o.id}><span>{o.codigo} · {o.cliente} · {o.obra}{o.situacao === "aguardando_aprovacao" ? " · aguardando aprovação" : ""}</span><strong>{o.total == null ? "—" : Number(o.total).toFixed(2)}</strong></li>
             ))}
           </ul>
         )}
