@@ -80,7 +80,7 @@ Regra geral: campos vazios não entram nos cálculos. Se faltar um campo para um
 - Validade da proposta (dias). PROPOSTO.
 - Contrato junto com a proposta. PROPOSTO.
 - Idiomas permitidos para o documento. CONFIRMADO.
-- PDF com cor e logo da empresa. CONFIRMADO.
+- PDF sem cor: só preto, branco e cinza, para não gastar tinta. Logo da empresa, se houver. CONFIRMADO em 22/11 (antes dizia "com cor").
 
 ### 3.6 Equipe e comissão
 - Setores, cargos e funções: a empresa cria. CONFIRMADO.
@@ -692,3 +692,4 @@ Dentro da v1: configuração da empresa, proposta e aprovação, pedido com stat
 - 22/11: nas telas, o nome da universidade não aparece. A sugestão é mostrada em cada etapa do cadastro, com o texto: "Sugestão inicial do Átrio, com base em boas práticas de marmoraria. Você pode alterar." A origem fica só na documentação interna. CONFIRMADO pela usuária.
 - 22/11: as sugestões (margem, perda, valor do m² por material e categoria) ficam dentro da configuração do gestor, não em módulo separado. Essa tela é prioridade, porque define os números que orçamento e cadastro usam. CONFIRMADO pela usuária.
 - 22/11: nas telas dos funcionários, há um texto explicativo que mostra onde clicar para cada ação (ex.: achar o preço do m², aprovar o pedido, procurar o material). CONFIRMADO pela usuária.
+- 22/11: o sistema (Átrio) pode ter cores. O PDF não tem cor: preto, branco e cinza. O Átrio ainda não tem logo nem identidade visual definida; hoje tem só o nome. CONFIRMADO pela usuária.
