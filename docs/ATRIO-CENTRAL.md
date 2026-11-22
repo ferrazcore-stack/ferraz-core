@@ -62,7 +62,7 @@ Regra geral: campos vazios não entram nos cálculos. Se faltar um campo para um
 - Impostos, comissão sobre o preço, margem desejada (%). CONFIRMADO.
 - Política de preço: fixo, por marcos, ou tempo e material. PROPOSTO.
 - Desconto máximo do vendedor (%). CONFIRMADO.
-- Quem aprova desconto acima do limite. PENDENTE.
+- Quem aprova desconto acima do limite: a empresa define na configuração (quem aprova, por função). CONFIRMADO em 22/11.
 - Margem máxima que o vendedor pode alterar no preço (%). CONFIRMADO.
 
 ### 3.3 Serviços e acabamentos
@@ -158,7 +158,7 @@ Ver seção 7 deste documento. CONFIRMADO (desenho).
 
 **4.7 Desconto**
 - Vendedor pode dar até o limite configurado. CONFIRMADO.
-- Acima do limite, precisa de aprovação. Quem aprova: PENDENTE.
+- Acima do limite, precisa de aprovação. Quem aprova: a empresa define na configuração. CONFIRMADO em 22/11.
 
 **4.8 Alteração de preço pelo vendedor**
 - Só dentro da margem configurada. Toda alteração fica registrada no relatório. CONFIRMADO.
@@ -470,7 +470,7 @@ Regra: definir tudo primeiro, depois criar telas e banco, depois testar. CONFIRM
 **Para o gestor da empresa (ele decide):**
 1. Taxas da maquininha e do link, banco e provedor.
 2. Padrão de comissão por função e dia de pagamento.
-3. Quem aprova desconto acima do limite (PENDENTE).
+3. (Resolvido em 22/11: a empresa define quem aprova na configuração.)
 
 **Para a usuária (processo):**
 1. Logística e administração: o que cada uma controla.
@@ -551,7 +551,7 @@ Regra geral: cada empresa tem seus próprios dados. Nenhuma tabela é compartilh
 |---|---|---|
 | Gestor | configurar tudo na aba da empresa; cadastrar funções e setores | — |
 | Vendedor | montar proposta; dar desconto até o limite; ver quanto ainda pode dar de desconto (folga, em R$ e %); alterar preço dentro da margem; liberar retirada e peça sem medição (se configurado) | passar do limite sem aprovação; ver custo, margem, taxas e dados de pagamento internos |
-| Acima do limite | aprovar desconto (quem, a empresa define) | — |
+| Acima do limite | aprovar desconto (quem, a empresa define na configuração) | — |
 | RH | cadastrar pessoas; calcular comissão e produção; definir comissão de liberação | ver chave Pix e CPF |
 | Financeiro | lançar pagamento; ver chave Pix e CPF; pagar comissão; receber notas fiscais | — |
 | Funcionário | registrar o próprio serviço; bater ponto; enviar atestado | ver dados de outros funcionários |
@@ -683,3 +683,4 @@ Dentro da v1: configuração da empresa, proposta e aprovação, pedido com stat
 - 21/11: beneficiários (nome, sobrenome, CPF, chave Pix); arquiteto no pedido; comissão por função com ajuste por pedido; ciclo mensal com pagamento no mês seguinte.
 - 21/11: regra de que valores e percentuais são sempre da empresa; Claude constrói estrutura, automação e forma de recebimento.
 - 22/11: orçamento e pedido são o mesmo registro; o que muda é a situação (orçamento, aguardando aprovação, aprovado, pedido). Vendedor passa a ver a folga de desconto (quanto ainda pode dar), sem ver custo, margem ou taxas. Acima do limite, o orçamento vai para aprovação. CONFIRMADO pela usuária.
+- 22/11: quem aprova desconto acima do limite é definido pela empresa na configuração. CONFIRMADO pela usuária.
