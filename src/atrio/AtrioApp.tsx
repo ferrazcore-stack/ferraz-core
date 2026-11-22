@@ -3,6 +3,7 @@ import { validarEmail, validarSenha } from "../lib/atrio/acesso";
 import { entrar, sair, sessaoAtual, meusVinculos, type Vinculo } from "../lib/atrio/acessoApi";
 import { supabaseConfigured } from "../lib/supabase";
 import PessoasPanel from "./PessoasPanel";
+import OrcamentoPanel from "./OrcamentoPanel";
 import "./atrio.css";
 
 export default function AtrioApp() {
@@ -13,6 +14,7 @@ export default function AtrioApp() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [enviando, setEnviando] = useState(false);
+  const [aba, setAba] = useState<"orcamento" | "pessoas">("orcamento");
 
   async function carregarAcessos() {
     try {
@@ -101,13 +103,20 @@ export default function AtrioApp() {
   }
 
   const atual = vinculos[0];
+  const podeGravarInternos = atual.mestre || atual.funcao === "gestor" || atual.funcao === "financeiro";
   return (
     <div className="atrio-tela atrio-shell">
       <header className="atrio-topo">
         <strong>{atual.nome}</strong>
         <button className="atrio-btn secundario" onClick={onSair}>Sair</button>
       </header>
-      <PessoasPanel empresaId={atual.empresa_id} mestre={atual.mestre} />
+      <nav className="atrio-abas">
+        <button className={aba === "orcamento" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("orcamento")}>Orçamentos</button>
+        <button className={aba === "pessoas" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("pessoas")}>Pessoas</button>
+      </nav>
+      {aba === "orcamento"
+        ? <OrcamentoPanel empresaId={atual.empresa_id} podeGravarInternos={podeGravarInternos} />
+        : <PessoasPanel empresaId={atual.empresa_id} mestre={atual.mestre} />}
     </div>
   );
 }
