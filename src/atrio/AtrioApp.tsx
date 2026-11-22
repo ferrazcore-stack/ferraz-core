@@ -5,6 +5,7 @@ import { supabaseConfigured } from "../lib/supabase";
 import PessoasPanel from "./PessoasPanel";
 import OrcamentoPanel from "./OrcamentoPanel";
 import ConfiguracaoPanel from "./ConfiguracaoPanel";
+import PedidosPanel from "./PedidosPanel";
 import "./atrio.css";
 
 export default function AtrioApp() {
@@ -15,7 +16,7 @@ export default function AtrioApp() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [aba, setAba] = useState<"orcamento" | "pessoas" | "configuracao">("orcamento");
+  const [aba, setAba] = useState<"orcamento" | "pedidos" | "pessoas" | "configuracao">("orcamento");
 
   async function carregarAcessos() {
     try {
@@ -113,10 +114,12 @@ export default function AtrioApp() {
       </header>
       <nav className="atrio-abas">
         <button className={aba === "orcamento" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("orcamento")}>Orçamentos</button>
+        <button className={aba === "pedidos" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("pedidos")}>Pedidos</button>
         <button className={aba === "pessoas" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("pessoas")}>Pessoas</button>
         {podeGravarInternos && <button className={aba === "configuracao" ? "atrio-btn" : "atrio-btn secundario"} onClick={() => setAba("configuracao")}>Configuração</button>}
       </nav>
       {aba === "orcamento" && <OrcamentoPanel empresaId={atual.empresa_id} podeGravarInternos={podeGravarInternos} />}
+      {aba === "pedidos" && <PedidosPanel empresaId={atual.empresa_id} podeGravarInternos={podeGravarInternos} />}
       {aba === "pessoas" && <PessoasPanel empresaId={atual.empresa_id} mestre={atual.mestre} />}
       {aba === "configuracao" && podeGravarInternos && <ConfiguracaoPanel empresaId={atual.empresa_id} />}
     </div>

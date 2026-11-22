@@ -4,6 +4,7 @@ import { totalOrcamento, condicaoDoCliente } from "../lib/atrio/orcamento";
 import { lerConfig, salvarOrcamento, listarOrcamentos, type Config } from "../lib/atrio/orcamentoApi";
 import { calcularDesconto } from "../lib/atrio/desconto";
 import Dica from "./Dica";
+import { virarPedido } from "../lib/atrio/pedidoApi";
 
 type Props = { empresaId: string; podeGravarInternos: boolean };
 
@@ -165,7 +166,19 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
         {lista.length === 0 ? <p>Nenhum orçamento ainda.</p> : (
           <ul className="atrio-lista">
             {lista.map((o) => (
-              <li key={o.id}><span>{o.codigo} · {o.cliente} · {o.obra}{o.situacao === "aguardando_aprovacao" ? " · aguardando aprovação" : ""}</span><strong>{o.total == null ? "—" : Number(o.total).toFixed(2)}</strong></li>
+              <li key={o.id}>
+                <span>{o.codigo} · {o.cliente} · {o.obra}{o.situacao === "aguardando_aprovacao" ? " · aguardando aprovação" : o.situacao === "aprovado" ? " · pedido criado" : ""}</span>
+                <span>
+                  <strong>{o.total == null ? "—" : Number(o.total).toFixed(2)}</strong>
+                  {podeGravarInternos && o.situacao === "rascunho" && (
+                    <button className="atrio-btn secundario" onClick={async () => {
+                      setErro("");
+                      try { await virarPedido(o.id); await carregar(); setAviso("Pedido criado a partir do orçamento."); }
+                      catch (e) { setErro(e instanceof Error ? e.message : "Não foi possível criar o pedido."); }
+                    }}>Virar pedido</button>
+                  )}
+                </span>
+              </li>
             ))}
           </ul>
         )}
