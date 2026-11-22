@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { FUNCOES, rotuloFuncao, funcaoValida, validarEmail, type Funcao } from "../lib/atrio/acesso";
 import { listarPessoas, mudarFuncao, convidarPessoa, type Pessoa } from "../lib/atrio/acessoApi";
+import Dica from "./Dica";
 
 type Props = { empresaId: string; mestre: boolean };
 
@@ -64,6 +65,7 @@ export default function PessoasPanel({ empresaId, mestre }: Props) {
 
   return (
     <section className="atrio-panel">
+      <Dica tela="pessoas" texto="Aqui ficam as pessoas da empresa. Só o mestre convida e muda a função de cada um." />
       {mestre && (
         <form className="atrio-card" onSubmit={convidar}>
           <h2>Convidar pessoa</h2>

@@ -3,6 +3,7 @@ import type { Ambiente, Condicao } from "../lib/atrio/orcamento";
 import { totalOrcamento, condicaoDoCliente } from "../lib/atrio/orcamento";
 import { lerConfig, salvarOrcamento, listarOrcamentos, type Config } from "../lib/atrio/orcamentoApi";
 import { calcularDesconto } from "../lib/atrio/desconto";
+import Dica from "./Dica";
 
 type Props = { empresaId: string; podeGravarInternos: boolean };
 
@@ -95,6 +96,7 @@ export default function OrcamentoPanel({ empresaId, podeGravarInternos }: Props)
 
   return (
     <section className="atrio-panel">
+      <Dica tela="orcamento" texto="Aqui você monta o orçamento. O total aparece ao lado enquanto você preenche. Use o ? para rever esta ajuda." />
       {!podeGravarInternos && (
         <p className="atrio-aviso">Você pode consultar os orçamentos. Quem grava orçamento completo é o gestor ou o financeiro.</p>
       )}

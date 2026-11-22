@@ -15,3 +15,8 @@
 .atrio-lista li { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #efede8; }
 .atrio-abas { display: flex; gap: 8px; padding: 12px 20px 0; max-width: 640px; margin: 0 auto; }
 fieldset { border: 1px solid #e3e1dc; border-radius: 12px; padding: 12px; }
+.atrio-dica-wrap { position: relative; justify-self: end; }
+.atrio-ajuda { width: 28px; height: 28px; border-radius: 50%; border: 1px solid #c9c6bf; background: #fff; cursor: pointer; font: inherit; }
+.atrio-dica { background: #1d1d1b; color: #fff; padding: 12px; border-radius: 10px; display: grid; gap: 8px; margin-top: 8px; max-width: 320px; }
+.atrio-dica p { margin: 0; }
+.atrio-dica .atrio-btn.secundario { background: #fff; color: #1d1d1b; }
