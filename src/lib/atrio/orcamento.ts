@@ -55,10 +55,12 @@ export function calcularAmbiente(a: Ambiente, c: Configuracao): ResultadoAmbient
 // Total = soma dos ambientes + frete uma vez, grossed up pelo mesmo divisor do preço.
 export function totalOrcamento(ambientes: Ambiente[], frete: number | null, c: Configuracao): number | null {
   const precos = ambientes.map((a) => precoAmbiente(a, c));
-  if (precos.some((p) => p == null) || frete == null) return null;
-  const divisor = 1 - (c.impostos ?? NaN) - (c.comissao ?? NaN) - (c.margem ?? NaN);
+  const validos = precos.filter((p): p is number => p != null);
+  if (validos.length !== precos.length || frete == null) return null;
+  if (c.impostos == null || c.comissao == null || c.margem == null) return null;
+  const divisor = 1 - c.impostos - c.comissao - c.margem;
   if (!(divisor > 0)) return null;
-  const soma = precos.reduce((s, p) => s + (p as number), 0);
+  const soma = validos.reduce((s, p) => s + p, 0);
   return soma + frete / divisor;
 }
 

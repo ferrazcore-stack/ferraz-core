@@ -33,7 +33,7 @@ test("frete entra uma vez só, grossed up pelo mesmo divisor", () => {
 
 test("condição: entrada de 30% e saldo em 3 parcelas, centavos fecham o total", () => {
   const c = condicaoDoCliente(1000, { entradaValor: null, entradaPercentual: 0.3, parcelas: 3, formaEntrada: "pix", formaSaldo: "cartao" });
-  assert.ok(c);
+  if (!c) throw new Error("condição não gerada");
   assert.equal(c.entrada, 300);
   assert.deepEqual(c.parcelas.map((p) => p.valor), [233.33, 233.33, 233.34]);
   assert.equal(c.parcelas.reduce((s, p) => s + p.valor, 0) + c.entrada, 1000);
