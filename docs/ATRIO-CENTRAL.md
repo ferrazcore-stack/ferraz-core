@@ -684,3 +684,4 @@ Dentro da v1: configuração da empresa, proposta e aprovação, pedido com stat
 - 21/11: regra de que valores e percentuais são sempre da empresa; Claude constrói estrutura, automação e forma de recebimento.
 - 22/11: orçamento e pedido são o mesmo registro; o que muda é a situação (orçamento, aguardando aprovação, aprovado, pedido). Vendedor passa a ver a folga de desconto (quanto ainda pode dar), sem ver custo, margem ou taxas. Acima do limite, o orçamento vai para aprovação. CONFIRMADO pela usuária.
 - 22/11: quem aprova desconto acima do limite é definido pela empresa na configuração. CONFIRMADO pela usuária.
+- 22/11: margem e perda iniciais vêm como padrão do sistema, baseado no ensino da Universidade da Marmoraria, adaptado à realidade da empresa. A empresa recebe como sugestão e pode aceitar ou alterar. Os números da universidade ainda não foram informados; ficam pendentes até a usuária enviá-los. CONFIRMADO pela usuária.
